@@ -1,13 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, Package, Store, User } from "lucide-react";
+import { Home, LayoutDashboard, ShoppingBag, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { path: "/", icon: Home, label: "Accueil" },
-  { path: "/catalogue", icon: Search, label: "Explorer" },
-  { path: "/suivi", icon: Package, label: "Commandes" },
-  { path: "/boutiques", icon: Store, label: "Boutiques" },
+  { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { path: "/dashboard?tab=orders", icon: ShoppingBag, label: "Ventes" },
   { path: "/profil", icon: User, label: "Profil", authPath: "/auth" },
 ];
 

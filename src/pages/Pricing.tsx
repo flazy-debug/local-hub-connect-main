@@ -11,33 +11,70 @@ const plans = [
   {
     id: "commission",
     name: "Standard",
-    subtitle: "Idéal pour commencer",
+    subtitle: "Simple & Gratuit",
     price: "0 CFA / mois",
     highlight: false,
+    icon: Zap,
+    color: "text-muted-foreground",
     features: [
-      "Inscription 100% gratuite",
-      "10% de commission sur chaque vente",
+      "Inscription gratuite",
+      "10% de commission / vente",
       "Notifications WhatsApp",
-      "Page boutique personnalisée",
-      "Support par messagerie",
+      "Boutique personnalisée",
+      "Virement sous 48h",
     ],
-    cta: "Commencer gratuitement",
+    cta: "Commencer",
   },
   {
     id: "monthly_flat",
     name: "PRO",
-    subtitle: "Le meilleur choix pour les boutiques",
-    price: formatCFA(5000) + " / mois",
+    subtitle: "Vendeur Sérieux",
+    price: "5 000 CFA / mois",
     highlight: true,
+    icon: Star,
+    color: "text-primary",
     features: [
-      "0% de commission — gardez 100% de vos ventes",
+      "0% de commission",
+      "Gardez 100% de vos gains",
       "Badge PRO certifié ⭐",
-      "Visibilité prioritaire dans les résultats",
-      "Support prioritaire",
-      "Statistiques avancées",
-      "Page boutique mise en avant",
+      "Visibilité accrue",
+      "Virement Prioritaire",
     ],
-    cta: "Devenir PRO",
+    cta: "Passer PRO",
+  },
+  {
+    id: "partner",
+    name: "Partenaire",
+    subtitle: "Business Premium",
+    price: "15 000 CFA / mois",
+    highlight: false,
+    icon: ShieldCheck,
+    color: "text-accent",
+    features: [
+      "0% de commission",
+      "Badge Certifié Officiel",
+      "Support WhatsApp 24/7",
+      "5 Boosts produits / mois",
+      "Analyse de marché",
+    ],
+    cta: "Devenir Partenaire",
+  },
+  {
+    id: "boost",
+    name: "Boost",
+    subtitle: "Visibilité Flash",
+    price: "1 000 CFA / 3j",
+    highlight: false,
+    icon: TrendingUp,
+    color: "text-orange-500",
+    features: [
+      "Top du catalogue",
+      "Badge 🔥 VENTE FLASH",
+      "Cible 5x plus de clients",
+      "Idéal pour déstocage",
+      "Activation instantanée",
+    ],
+    cta: "Booster un produit",
   },
 ];
 
@@ -61,47 +98,52 @@ export default function Pricing() {
         </section>
 
         {/* Plans */}
-        <section className="container -mt-10 pb-16">
-          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+        <section className="container -mt-10 pb-16 px-4">
+          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan, i) => (
               <motion.div
                 key={plan.id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.15 }}
+                transition={{ delay: i * 0.1 }}
               >
-                <Card className={`relative h-full ${plan.highlight ? "border-2 border-accent shadow-xl shadow-accent/10" : "border"}`}>
+                <Card className={`relative h-full overflow-hidden rounded-3xl border-none shadow-xl transition-all hover:shadow-2xl hover:-translate-y-1 ${plan.highlight ? "ring-2 ring-primary bg-primary/5 shadow-primary/10" : "bg-card shadow-black/5"}`}>
                   {plan.highlight && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-accent text-accent-foreground px-4 py-1 text-xs font-bold">
-                        <Star className="mr-1 h-3 w-3 fill-current" /> RECOMMANDÉ
-                      </Badge>
+                    <div className="absolute top-0 right-0">
+                      <div className="bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-lg">
+                        POPULAIRE
+                      </div>
                     </div>
                   )}
-                  <CardHeader className="text-center pt-8">
-                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
-                      {plan.highlight ? <ShieldCheck className="h-7 w-7 text-accent" /> : <Zap className="h-7 w-7 text-accent" />}
+                  <CardHeader className="text-center pt-8 pb-4">
+                    <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 ${plan.color}`}>
+                      <plan.icon className="h-8 w-8" />
                     </div>
-                    <CardTitle className="font-display text-2xl">{plan.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{plan.subtitle}</p>
-                    <p className="mt-4 font-display text-3xl font-bold text-accent">{plan.price}</p>
+                    <div>
+                      <CardTitle className="font-display text-2xl font-bold">{plan.name}</CardTitle>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">{plan.subtitle}</p>
+                    </div>
+                    <div className="mt-4">
+                      <p className="font-display text-2xl font-black text-primary">{plan.price}</p>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 flex flex-col justify-between">
                     <ul className="space-y-3">
                       {plan.features.map((f, j) => (
-                        <li key={j} className="flex items-start gap-2 text-sm">
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                          <span>{f}</span>
+                        <li key={j} className="flex items-start gap-3 text-[13px]">
+                          <div className="h-5 w-5 rounded-full bg-success/10 flex items-center justify-center shrink-0">
+                            <Check className="h-3 w-3 text-success" />
+                          </div>
+                          <span className="text-muted-foreground font-medium">{f}</span>
                         </li>
                       ))}
                     </ul>
-                    <Link to="/devenir-vendeur" state={{ plan: plan.id }}>
+                    <Link to={plan.id === "boost" ? "/dashboard?tab=ads" : "/devenir-vendeur"} state={{ plan: plan.id }}>
                       <Button
-                        className={`w-full ${plan.highlight ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`}
-                        variant={plan.highlight ? "default" : "outline"}
-                        size="lg"
+                        className={`w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all ${plan.highlight ? "bg-primary text-primary-foreground hover:scale-105" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+                        variant="default"
                       >
-                        {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
+                        {plan.cta}
                       </Button>
                     </Link>
                   </CardContent>

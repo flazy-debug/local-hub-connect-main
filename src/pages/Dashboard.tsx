@@ -277,14 +277,70 @@ export default function Dashboard() {
   }
 
 
+  const { tab: queryTab } = Object.fromEntries(new URLSearchParams(window.location.search));
+  const [activeTab, setActiveTab] = useState(queryTab || "products");
+
+  useEffect(() => {
+    if (queryTab) setActiveTab(queryTab);
+  }, [queryTab]);
+
   return (
-    <div className="min-h-screen bg-secondary/30 py-8">
-      <div className="container">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="min-h-screen bg-secondary/30 pb-24 pt-4 md:py-8">
+      <div className="container px-4">
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="font-display text-3xl font-bold">Dashboard Vendeur</h1>
-            <p className="text-muted-foreground">Gérez vos produits et commandes</p>
+            <h1 className="font-display text-2xl font-bold md:text-3xl">Tableau de Bord</h1>
+            <p className="text-xs text-muted-foreground">Bienvenue, {(user as any)?.full_name || 'Vendeur'}</p>
           </div>
+          <Button variant="outline" size="icon" className="md:hidden rounded-full">
+            <Bell className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Visual Bubbles Stats - Mobile First */}
+        <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center rounded-3xl bg-primary p-4 text-center text-primary-foreground shadow-lg shadow-primary/20"
+          >
+            <TrendingUp className="mb-2 h-6 w-6 opacity-80" />
+            <span className="text-lg font-bold leading-tight">{formatCFA(totalSales)}</span>
+            <span className="text-[10px] uppercase tracking-wider opacity-70">Ventes Totales</span>
+          </motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+            className="flex flex-col items-center justify-center rounded-3xl bg-accent p-4 text-center text-accent-foreground shadow-lg shadow-accent/20"
+          >
+            <ShoppingCart className="mb-2 h-6 w-6 opacity-80" />
+            <span className="text-lg font-bold leading-tight">{totalOrders}</span>
+            <span className="text-[10px] uppercase tracking-wider opacity-70">Commandes</span>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col items-center justify-center rounded-3xl bg-success p-4 text-center text-success-foreground shadow-lg shadow-success/20"
+          >
+            <Wallet className="mb-2 h-6 w-6 opacity-80" />
+            <span className="text-lg font-bold leading-tight">{formatCFA(availableBalance)}</span>
+            <span className="text-[10px] uppercase tracking-wider opacity-70">Disponible</span>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col items-center justify-center rounded-3xl bg-warning p-4 text-center text-warning-foreground shadow-lg shadow-warning/20"
+          >
+            <ShieldCheck className="mb-2 h-6 w-6 opacity-80" />
+            <span className="text-lg font-bold leading-tight">{formatCFA(escrowBalance)}</span>
+            <span className="text-[10px] uppercase tracking-wider opacity-70">Séquestre</span>
+          </motion.div>
         </div>
 
         {/* Plan banner */}
@@ -433,16 +489,28 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue="products">
-          <TabsList className="flex-wrap">
-            <TabsTrigger value="products">Produits ({totalProducts})</TabsTrigger>
-            <TabsTrigger value="orders">Commandes ({totalOrders})</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="shop"><Store className="mr-1 h-3.5 w-3.5" /> Ma Boutique</TabsTrigger>
-            <TabsTrigger value="promos"><Tag className="mr-1 h-3.5 w-3.5" /> Codes Promo</TabsTrigger>
-            <TabsTrigger value="ads" className="text-accent font-bold"><Megaphone className="mr-1 h-3.5 w-3.5" /> ADS MANAGER</TabsTrigger>
-            <TabsTrigger value="landing"><LinkIcon className="mr-1 h-3.5 w-3.5" /> Marketing</TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="scrollbar-hide overflow-x-auto pb-2">
+            <TabsList className="inline-flex w-auto bg-transparent p-0 gap-2">
+              <TabsTrigger value="products" className="rounded-full border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6">Produits</TabsTrigger>
+              <TabsTrigger value="orders" className="rounded-full border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6">Commandes</TabsTrigger>
+              <TabsTrigger value="transactions" className="rounded-full border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6">Compta</TabsTrigger>
+              <TabsTrigger value="shop" className="rounded-full border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6">Boutique</TabsTrigger>
+              <TabsTrigger value="promos" className="rounded-full border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6">Promos</TabsTrigger>
+              <TabsTrigger value="ads" className="rounded-full border data-[state=active]:bg-accent data-[state=active]:text-accent-foreground px-6 font-bold flex items-center gap-1">
+                <Megaphone className="h-3.5 w-3.5" /> BOOST
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
 
           {/* Shop Settings */}
           <TabsContent value="shop" className="mt-4">
@@ -524,12 +592,61 @@ export default function Dashboard() {
           </TabsContent>
 
           {/* Products */}
-          <TabsContent value="products" className="mt-4">
-            <Card>
-              <CardContent className="p-0">
-                {products.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground"><Package className="mx-auto h-12 w-12 opacity-30" /><p className="mt-3">Aucun produit. Ajoutez votre premier produit !</p></div>
-                ) : (
+          <TabsContent value="products" className="mt-4 focus-visible:outline-none">
+            {products.length === 0 ? (
+              <Card className="border-dashed py-12">
+                <CardContent className="flex flex-col items-center justify-center text-center">
+                  <Package className="h-12 w-12 opacity-20 mb-4" />
+                  <p className="text-muted-foreground font-medium">Aucun produit en ligne</p>
+                  <Button variant="link" onClick={() => setAddDialogOpen(true)} className="text-accent">Ajouter mon premier article</Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:hidden">
+                {products.map(p => (
+                  <Card key={p.id} className="overflow-hidden border-none shadow-sm rounded-2xl">
+                    <div className="flex p-3 gap-3">
+                      <div className="h-20 w-20 rounded-xl bg-muted overflow-hidden shrink-0">
+                        <img src={p.images?.[0]} alt="" className="h-full w-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <h4 className="font-bold text-sm truncate">{p.name}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-primary font-bold">{formatCFA(p.price)}</span>
+                          {p.promo_price && <span className="text-[10px] text-muted-foreground line-through">{formatCFA(p.price)}</span>}
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-[10px] py-0 h-5">Stock: {p.stock}</Badge>
+                          {p.is_boosted && <Badge className="bg-orange-500 text-[10px] py-0 h-5">BOOSTÉ</Badge>}
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button 
+                          variant="secondary" 
+                          size="icon" 
+                          className="h-9 w-9 rounded-xl"
+                          onClick={() => setEditProduct(p)}
+                        >
+                          <Pencil className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button 
+                          variant="secondary" 
+                          size="icon" 
+                          className="h-9 w-9 rounded-xl"
+                          onClick={() => { setSelectedBoostProduct(p); setBoostDialogOpen(true); }}
+                        >
+                          <Megaphone className="h-4 w-4 text-accent" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+            
+            <div className="hidden md:block">
+              <Card className="rounded-2xl border-none shadow-sm">
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader><TableRow>
                       <TableHead>Produit</TableHead><TableHead>Prix</TableHead><TableHead>Promo</TableHead><TableHead>Stock</TableHead><TableHead>Actions</TableHead>
@@ -543,14 +660,7 @@ export default function Dashboard() {
                           <TableCell>{p.stock}</TableCell>
                           <TableCell className="flex gap-1">
                             {!p.is_boosted && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="text-accent hover:text-accent hover:bg-accent/10"
-                                onClick={() => { setSelectedBoostProduct(p); setBoostDialogOpen(true); }}
-                              >
-                                <Megaphone className="h-4 w-4" />
-                              </Button>
+                              <Button variant="ghost" size="icon" className="text-accent" onClick={() => { setSelectedBoostProduct(p); setBoostDialogOpen(true); }}><Megaphone className="h-4 w-4" /></Button>
                             )}
                             <Button variant="ghost" size="icon" onClick={() => setEditProduct(p)}><Pencil className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => deleteProduct(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -559,18 +669,58 @@ export default function Dashboard() {
                       ))}
                     </TableBody>
                   </Table>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Orders */}
-          <TabsContent value="orders" className="mt-4">
-            <Card>
-              <CardContent className="p-0">
-                {orders.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground"><ShoppingCart className="mx-auto h-12 w-12 opacity-30" /><p className="mt-3">Aucune commande.</p></div>
-                ) : (
+          <TabsContent value="orders" className="mt-4 focus-visible:outline-none">
+            {orders.length === 0 ? (
+              <Card className="border-dashed py-12">
+                <CardContent className="flex flex-col items-center justify-center text-center">
+                  <ShoppingCart className="h-12 w-12 opacity-20 mb-4" />
+                  <p className="text-muted-foreground font-medium">Aucune commande reçue</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:hidden">
+                {orders.map(o => (
+                  <Card key={o.id} className="overflow-hidden border-none shadow-sm rounded-2xl p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-[10px] font-mono text-muted-foreground uppercase">{o.order_number}</p>
+                        <h4 className="font-bold text-sm">{o.buyer_name}</h4>
+                      </div>
+                      <Badge className={cn("text-[10px] rounded-full", statusColors[o.status])}>
+                        {statusLabels[o.status] || o.status}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Total</span>
+                      <span className="font-bold text-primary">{formatCFA(o.total)}</span>
+                    </div>
+                    <div className="pt-2 flex gap-2">
+                      {o.status === "paid" && (
+                        <Button className="flex-1 bg-primary text-primary-foreground h-11 rounded-xl" onClick={() => updateOrderStatus(o.id, "preparing")}>Préparer</Button>
+                      )}
+                      {o.status === "preparing" && (
+                        <Button className="flex-1 bg-accent text-accent-foreground h-11 rounded-xl" onClick={() => openShippingProof(o.id)}>
+                          <Camera className="h-4 w-4 mr-2" /> Expédier
+                        </Button>
+                      )}
+                      <Button variant="secondary" className="h-11 rounded-xl" onClick={() => window.open(`https://wa.me/${o.buyer_phone?.replace(/\+/g, '')}?text=Bonjour%20${o.buyer_name},%20concernant%20votre%20commande%20${o.order_number}...`)}>
+                        <Facebook className="h-4 w-4" /> {/* WhatsApp icon proxy */}
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            <div className="hidden md:block">
+              <Card className="rounded-2xl border-none shadow-sm">
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader><TableRow>
                       <TableHead>N° Commande</TableHead><TableHead>Client</TableHead><TableHead>Total</TableHead><TableHead>Statut</TableHead><TableHead>Actions</TableHead>
@@ -598,9 +748,9 @@ export default function Dashboard() {
                       ))}
                     </TableBody>
                   </Table>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Transactions */}
@@ -738,16 +888,31 @@ export default function Dashboard() {
                         ))}
                      </div>
                    )}
-                 </div>
-               </CardContent>
-            </Card>
-          </TabsContent>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabsContent value="landing" className="mt-4">
-            <LandingPageGenerator products={products} />
-          </TabsContent>
-        </Tabs>
-      </div>
+            <TabsContent value="landing" className="mt-4">
+              <LandingPageGenerator products={products} />
+            </TabsContent>
+          </motion.div>
+        </AnimatePresence>
+      </Tabs>
+
+        {/* Floating Action Button - Mobile Only */}
+        <motion.div 
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          className="fixed bottom-24 right-6 z-40 md:hidden"
+        >
+          <Button 
+            onClick={() => setAddDialogOpen(true)}
+            className="h-14 w-14 rounded-full bg-accent text-accent-foreground shadow-2xl shadow-accent/40"
+          >
+            <Plus className="h-7 w-7" />
+          </Button>
+        </motion.div>
 
       {/* Boost Product Dialog */}
       <Dialog open={boostDialogOpen} onOpenChange={setBoostDialogOpen}>
@@ -815,5 +980,6 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
     </div>
+  </div>
   );
 }
