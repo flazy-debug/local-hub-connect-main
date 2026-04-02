@@ -1,0 +1,17 @@
+{
+  "name": "VOIKET - Marketplace Hybride",
+  "short_name": "VOIKET",
+  "description": "Achetez et vendez localement au Togo avec VOIKET. Boutique, Pubs et Livraison incluses.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FFC107",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,455 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  BarChart3, Users, AlertTriangle, Receipt, Store, Shield,
+  ChevronRight, RefreshCw, Crown, Ban, MessageCircle, Clock,
+  TrendingUp, ShoppingBag, AlertCircle
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
+  useSidebar
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { formatCFA, generateWhatsAppLink } from "@/lib/mock-data";
+import PageTransition from "@/components/PageTransition";
+
+type Section = "stats" | "shops" | "pro" | "commissions" | "disputes";
+
+const navItems: { id: Section; label: string; icon: any }[] = [
+  { id: "stats", label: "Statistiques", icon: BarChart3 },
+  { id: "shops", label: "Boutiques", icon: Store },
+  { id: "pro", label: "Forfaits PRO", icon: Crown },
+  { id: "commissions", label: "Commissions", icon: Receipt },
+  { id: "disputes", label: "Litiges", icon: AlertTriangle },
+];
+
+function AdminSidebar({ active, onNavigate }: { active: Section; onNavigate: (s: Section) => void }) {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>
+            <Shield className="mr-2 h-4 w-4" />
+            {!collapsed && "Administration"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    onClick={() => onNavigate(item.id)}
+                    className={active === item.id ? "bg-accent/10 text-accent font-medium" : "hover:bg-muted/50"}
+                  >
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
+
+export default function AdminPortal() {
+  const { user, isAdmin, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [section, setSection] = useState<Section>("stats");
+  const [sellers, setSellers] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [disputes, setDisputes] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [disputeDialog, setDisputeDialog] = useState<any>(null);
+  const [adminResponse, setAdminResponse] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && !user) { navigate("/auth"); return; }
+    if (!authLoading && user && !isAdmin) { navigate("/"); toast.error("Accès réservé aux administrateurs"); return; }
+    if (user && isAdmin) fetchAll();
+  }, [user, isAdmin, authLoading]);
+
+  const fetchAll = async () => {
+    setLoadingData(true);
+    const [sellersRes, txRes, ordRes, dispRes] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("transactions").select("*").order("created_at", { ascending: false }),
+      supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("disputes").select("*").order("created_at", { ascending: false }),
+    ]);
+    setSellers(sellersRes.data || []);
+    setTransactions(txRes.data || []);
+    setOrders(ordRes.data || []);
+    setDisputes(dispRes.data || []);
+    setLoadingData(false);
+  };
+
+  if (authLoading || loadingData) {
+    return <div className="flex min-h-screen items-center justify-center"><p className="text-muted-foreground">Chargement...</p></div>;
+  }
+
+  const shops = sellers.filter(s => s.shop_name);
+  const proShops = shops.filter(s => s.subscription_type === "monthly_flat");
+  const commShops = shops.filter(s => s.subscription_type !== "monthly_flat");
+  const openDisputes = disputes.filter(d => d.status === "open");
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthlyOrders = orders.filter(o => new Date(o.created_at) >= monthStart);
+  const monthlyTx = transactions.filter(t => new Date(t.created_at) >= monthStart);
+  const monthlyRevenue = monthlyTx.reduce((s, t) => s + (t.commission_fee || 0), 0) + proShops.length * 5000;
+
+  const getProStatus = (seller: any) => {
+    if (seller.subscription_type !== "monthly_flat") return null;
+    if (!seller.pro_expires_at) return "active";
+    const exp = new Date(seller.pro_expires_at);
+    const daysLeft = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) return "expired";
+    if (daysLeft <= 3) return "expiring";
+    return "active";
+  };
+
+  const handleSetPro = async (userId: string) => {
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+    await supabase.from("profiles").update({
+      subscription_type: "monthly_flat",
+      pro_expires_at: expiresAt.toISOString(),
+    }).eq("user_id", userId);
+    toast.success("Boutique passée en PRO !");
+    fetchAll();
+  };
+
+  const handleSuspend = async (userId: string) => {
+    await supabase.from("products").update({ is_active: false }).eq("seller_id", userId);
+    toast.success("Boutique suspendue — produits masqués");
+    fetchAll();
+  };
+
+  const handleRenewReminder = (seller: any) => {
+    const phone = seller.whatsapp_number || seller.phone;
+    if (!phone) { toast.error("Aucun numéro trouvé"); return; }
+    const msg = `Bonjour ${seller.shop_name || seller.display_name} ! Votre forfait PRO sur VoiketMarket expire bientôt. Renouvelez pour garder votre visibilité prioritaire et le badge PRO. Contactez-nous pour le paiement de 5 000 CFA.`;
+    window.open(`https://wa.me/${phone.replace("+", "")}?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  const handleResolveDispute = async (disputeId: string) => {
+    await supabase.from("disputes").update({
+      status: "resolved",
+      admin_response: adminResponse,
+    }).eq("id", disputeId);
+    toast.success("Litige résolu");
+    setDisputeDialog(null);
+    setAdminResponse("");
+    fetchAll();
+  };
+
+  return (
+    <PageTransition>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AdminSidebar active={section} onNavigate={setSection} />
+          <div className="flex-1 flex flex-col">
+            <header className="flex h-14 items-center gap-3 border-b px-4">
+              <SidebarTrigger />
+              <Shield className="h-5 w-5 text-accent" />
+              <h1 className="font-display text-lg font-bold">Portail Admin</h1>
+              <Button variant="ghost" size="sm" className="ml-auto" onClick={fetchAll}>
+                <RefreshCw className="mr-1 h-4 w-4" /> Actualiser
+              </Button>
+            </header>
+
+            <main className="flex-1 overflow-auto p-4 md:p-6 space-y-6">
+              {/* STATS */}
+              {section === "stats" && (
+                <>
+                  <h2 className="font-display text-xl font-bold">Statistiques Globales</h2>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">CA Mensuel</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-success" />
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold text-accent">{formatCFA(monthlyRevenue)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Forfaits PRO + Commissions</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Boutiques</CardTitle>
+                        <Store className="h-4 w-4 text-primary" />
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">{shops.length}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          <span className="text-accent font-medium">{proShops.length} PRO</span> · {commShops.length} Commission
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Ventes (mois)</CardTitle>
+                        <ShoppingBag className="h-4 w-4 text-primary" />
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">{monthlyOrders.length}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Commandes traitées</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Litiges</CardTitle>
+                        <AlertCircle className="h-4 w-4 text-destructive" />
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold text-destructive">{openDisputes.length}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Signalements en cours</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
+
+              {/* SHOPS */}
+              {section === "shops" && (
+                <>
+                  <h2 className="font-display text-xl font-bold">Gestion des Boutiques</h2>
+                  <div className="rounded-xl border overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Boutique</TableHead>
+                          <TableHead>Quartier</TableHead>
+                          <TableHead>Abonnement</TableHead>
+                          <TableHead>Expiration PRO</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {shops.map((s) => {
+                          const status = getProStatus(s);
+                          return (
+                            <TableRow key={s.id}>
+                              <TableCell className="font-medium">{s.shop_name || s.display_name}</TableCell>
+                              <TableCell>{s.neighborhood || "—"}</TableCell>
+                              <TableCell>
+                                {s.subscription_type === "monthly_flat" ? (
+                                  <Badge className="bg-accent text-accent-foreground">PRO</Badge>
+                                ) : (
+                                  <Badge variant="secondary">Commission 10%</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {s.subscription_type === "monthly_flat" ? (
+                                  s.pro_expires_at ? (
+                                    <span className={
+                                      status === "expired" ? "text-destructive font-medium" :
+                                      status === "expiring" ? "text-warning font-medium" : "text-success"
+                                    }>
+                                      {new Date(s.pro_expires_at).toLocaleDateString("fr-FR")}
+                                      {status === "expired" && " (Expiré)"}
+                                      {status === "expiring" && " (Bientôt)"}
+                                    </span>
+                                  ) : <span className="text-success">Actif</span>
+                                ) : "—"}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-1 flex-wrap">
+                                  {s.subscription_type !== "monthly_flat" && (
+                                    <Button size="sm" variant="outline" onClick={() => handleSetPro(s.user_id)}>
+                                      <Crown className="mr-1 h-3 w-3" /> Passer PRO
+                                    </Button>
+                                  )}
+                                  {s.subscription_type === "monthly_flat" && (status === "expired" || status === "expiring") && (
+                                    <Button size="sm" variant="outline" onClick={() => handleSetPro(s.user_id)}>
+                                      <RefreshCw className="mr-1 h-3 w-3" /> Renouveler
+                                    </Button>
+                                  )}
+                                  <Button size="sm" variant="destructive" onClick={() => handleSuspend(s.user_id)}>
+                                    <Ban className="mr-1 h-3 w-3" /> Suspendre
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                        {shops.length === 0 && (
+                          <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucune boutique enregistrée</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
+
+              {/* PRO TRACKING */}
+              {section === "pro" && (
+                <>
+                  <h2 className="font-display text-xl font-bold">Suivi des Forfaits PRO</h2>
+                  <div className="grid gap-3">
+                    {proShops.length === 0 && <p className="text-muted-foreground">Aucune boutique PRO</p>}
+                    {proShops.map((s) => {
+                      const status = getProStatus(s);
+                      return (
+                        <Card key={s.id} className={
+                          status === "expired" ? "border-destructive bg-destructive/5" :
+                          status === "expiring" ? "border-warning bg-warning/5" : ""
+                        }>
+                          <CardContent className="flex items-center justify-between p-4">
+                            <div>
+                              <p className="font-semibold">{s.shop_name || s.display_name}</p>
+                              <p className="text-sm text-muted-foreground">{s.neighborhood || "—"}</p>
+                              <div className="mt-1 flex items-center gap-2">
+                                <Clock className="h-3 w-3" />
+                                <span className={`text-xs font-medium ${
+                                  status === "expired" ? "text-destructive" :
+                                  status === "expiring" ? "text-warning" : "text-success"
+                                }`}>
+                                  {status === "expired" ? "Expiré" :
+                                   status === "expiring" ? "Expire dans moins de 3 jours" :
+                                   s.pro_expires_at ? `Expire le ${new Date(s.pro_expires_at).toLocaleDateString("fr-FR")}` : "Actif"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              {(status === "expired" || status === "expiring") && (
+                                <Button size="sm" variant="outline" onClick={() => handleRenewReminder(s)}>
+                                  <MessageCircle className="mr-1 h-3 w-3" /> Rappel WhatsApp
+                                </Button>
+                              )}
+                              <Button size="sm" onClick={() => handleSetPro(s.user_id)}>
+                                <RefreshCw className="mr-1 h-3 w-3" /> Renouveler
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* COMMISSIONS JOURNAL */}
+              {section === "commissions" && (
+                <>
+                  <h2 className="font-display text-xl font-bold">Journal des Commissions</h2>
+                  <div className="rounded-xl border overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Vendeur</TableHead>
+                          <TableHead className="text-right">Prix Vente</TableHead>
+                          <TableHead className="text-right">Commission (10%)</TableHead>
+                          <TableHead className="text-right">À reverser</TableHead>
+                          <TableHead>Statut</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {transactions.filter(t => t.commission_fee > 0).map((tx) => {
+                          const seller = sellers.find(s => s.user_id === tx.seller_id);
+                          return (
+                            <TableRow key={tx.id}>
+                              <TableCell className="text-sm">{new Date(tx.created_at).toLocaleDateString("fr-FR")}</TableCell>
+                              <TableCell className="font-medium">{seller?.shop_name || seller?.display_name || "—"}</TableCell>
+                              <TableCell className="text-right">{formatCFA(tx.amount_total)}</TableCell>
+                              <TableCell className="text-right text-accent font-medium">{formatCFA(tx.commission_fee)}</TableCell>
+                              <TableCell className="text-right">{formatCFA(tx.seller_payout)}</TableCell>
+                              <TableCell>
+                                <Badge variant={tx.status === "released" ? "default" : "secondary"}>
+                                  {tx.status === "escrow" ? "En attente" : tx.status === "released" ? "Reversé" : tx.status}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                        {transactions.filter(t => t.commission_fee > 0).length === 0 && (
+                          <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune transaction avec commission</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
+
+              {/* DISPUTES */}
+              {section === "disputes" && (
+                <>
+                  <h2 className="font-display text-xl font-bold">Litiges en cours</h2>
+                  <div className="grid gap-3">
+                    {disputes.length === 0 && <p className="text-muted-foreground">Aucun litige signalé</p>}
+                    {disputes.map((d) => {
+                      const order = orders.find(o => o.id === d.order_id);
+                      return (
+                        <Card key={d.id} className={d.status === "open" ? "border-destructive/50" : ""}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={d.status === "open" ? "destructive" : "secondary"}>
+                                    {d.status === "open" ? "Ouvert" : "Résolu"}
+                                  </Badge>
+                                  <span className="text-sm text-muted-foreground">
+                                    {new Date(d.created_at).toLocaleDateString("fr-FR")}
+                                  </span>
+                                </div>
+                                <p className="mt-2 font-medium">Commande : {order?.order_number || d.order_id.slice(0, 8)}</p>
+                                <p className="mt-1 text-sm text-muted-foreground">{d.reason}</p>
+                                {d.admin_response && (
+                                  <p className="mt-2 rounded bg-muted p-2 text-sm"><strong>Réponse :</strong> {d.admin_response}</p>
+                                )}
+                              </div>
+                              {d.status === "open" && (
+                                <Button size="sm" onClick={() => { setDisputeDialog(d); setAdminResponse(""); }}>
+                                  Résoudre
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </main>
+          </div>
+        </div>
+
+        {/* Dispute resolution dialog */}
+        <Dialog open={!!disputeDialog} onOpenChange={() => setDisputeDialog(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Résoudre le litige</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{disputeDialog?.reason}</p>
+              <Textarea
+                placeholder="Votre réponse au litige..."
+                value={adminResponse}
+                onChange={(e) => setAdminResponse(e.target.value)}
+              />
+              <Button onClick={() => handleResolveDispute(disputeDialog?.id)} className="w-full">
+                Marquer comme résolu
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </SidebarProvider>
+    </PageTransition>
+  );
+}
