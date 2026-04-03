@@ -269,11 +269,11 @@ export function SellerDashboard() {
                 </div>
                 <div>
                    <h2 className="text-xl font-black text-primary flex items-center gap-2">
-                     {sellerPlan === "PRO" ? "VOIKET PRO ⭐" : "PLAN STANDARD"}
+                     {sellerPlan === "PRO" ? "EPUREMARKET PRO ⭐" : "EPUREMARKET STANDARD"}
                      {sellerPlan === "PARTNER" && <Badge className="bg-success">PARTENAIRE</Badge>}
                    </h2>
                    <p className="text-sm text-muted-foreground font-medium">
-                     {sellerPlan === "PRO" ? "Boosts illimités & Commissions 0%" : "Commission 10% par vente"}
+                     {sellerPlan === "PRO" ? "Boosts illimités & Commissions 0%" : "Commission 14% par vente (Gateway + Plateforme)"}
                    </p>
                 </div>
               </div>
@@ -312,6 +312,18 @@ export function SellerDashboard() {
                         </div>
                       </div>
                       <div className="space-y-2"><Label>Photos</Label><ImageUpload images={pImages} onChange={setPImages} maxImages={5} /></div>
+                      
+                      <div className="flex items-start space-x-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 mt-4">
+                        <input 
+                          type="checkbox" 
+                          id="compliance" 
+                          required 
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <Label htmlFor="compliance" className="text-[11px] leading-tight font-medium text-muted-foreground cursor-pointer">
+                          Je certifie que ce produit est 100% légal et conforme aux <Link to="/help" className="text-primary underline font-bold">règles publicitaires Meta/Facebook</Link>. Pas de contrefaçons, tabac, ou produits interdits.
+                        </Label>
+                      </div>
                       <Button type="submit" className="w-full h-12 rounded-xl bg-primary text-white font-bold" disabled={submitting}>
                         {submitting ? "Publication..." : "Publier maintenant"}
                       </Button>
@@ -326,7 +338,7 @@ export function SellerDashboard() {
         <Card className="border-none shadow-premium rounded-[32px] bg-white overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-xl font-black text-primary uppercase tracking-tighter">Performance des Ventes</CardTitle>
+              <CardTitle className="text-xl font-black text-primary uppercase tracking-tighter">Epuremarket Analytics</CardTitle>
               <CardDescription>Visualisation de vos revenus réels à Lomé</CardDescription>
             </div>
             <Select value={chartTimeframe} onValueChange={setChartTimeframe}>
@@ -340,9 +352,9 @@ export function SellerDashboard() {
               </SelectContent>
             </Select>
           </CardHeader>
-          <CardContent className="pt-4 overflow-hidden">
-            <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+          <CardContent className="pt-4 px-2 md:px-6">
+            <div className="h-[350px] w-full relative">
+              <ResponsiveContainer width="100%" height={350}>
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorBrut" x1="0" y1="0" x2="0" y2="1">

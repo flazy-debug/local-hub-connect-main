@@ -34,7 +34,7 @@ export default function Navbar() {
             <Store className="h-4 w-4 text-primary-foreground md:h-5 w-5" />
           </div>
           <span className="font-display text-lg font-black text-primary md:text-xl tracking-tighter">
-            Voiket<span className="text-accent underline decoration-2 underline-offset-4">Market</span>
+            Epure<span className="text-accent underline decoration-2 underline-offset-4">market</span>
           </span>
         </Link>
 

@@ -11,8 +11,8 @@ export default function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
                 <Store className="h-4 w-4 text-accent-foreground" />
               </div>
-              <span className="font-display text-lg font-bold">
-                Voiket<span className="text-accent">Market</span>
+              <span className="font-display text-lg font-bold text-white">
+                Epure<span className="text-white underline underline-offset-4 decoration-accent">market</span>
               </span>
             </Link>
             <p className="mt-3 text-sm opacity-80">
@@ -42,13 +42,13 @@ export default function Footer() {
             <ul className="mt-3 space-y-2 text-sm opacity-80">
               <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Lomé, Togo</li>
               <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> +228 90 XX XX XX</li>
-              <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> contact@voiketmarket.com</li>
+              <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> contact@epuremarket.com</li>
             </ul>
           </div>
         </div>
 
         <div className="mt-8 border-t border-primary-foreground/20 pt-6 text-center text-sm opacity-60">
-          © 2024 VoiketMarket. Tous droits réservés.
+          © 2026 Epuremarket. Tous droits réservés.
         </div>
       </div>
     </footer>

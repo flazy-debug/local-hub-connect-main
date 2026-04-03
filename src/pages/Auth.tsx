@@ -74,7 +74,7 @@ export default function Auth() {
     setIsLoading(true);
     try {
       await signIn(loginIdentifier, loginPassword);
-      toast({ title: "Connexion réussie", description: "Bienvenue sur VoiketMarket !" });
+      toast({ title: "Connexion réussie", description: "Bienvenue sur Epuremarket !" });
       
       const intendedRole = localStorage.getItem("intended_role");
       if (intendedRole === "seller") {
@@ -114,7 +114,7 @@ export default function Auth() {
       
       toast({ 
         title: "Inscription réussie !", 
-        description: signupRole === "partner" ? "Votre demande est en cours de validation." : "Bienvenue sur VoiketMarket !" 
+        description: signupRole === "partner" ? "Votre demande est en cours de validation." : "Bienvenue sur Epuremarket !" 
       });
 
       // Redirect based on role
@@ -163,8 +163,8 @@ export default function Auth() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
             <Store className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="font-display text-3xl font-bold tracking-tight italic">VOIKET</h1>
-          <p className="mt-1 text-sm text-muted-foreground font-medium">La Marketplace Hybride & Sociale</p>
+          <h1 className="font-display text-3xl font-black tracking-tight text-primary">EPURE<span className="text-accent underline decoration-2 ">MARKET</span></h1>
+          <p className="mt-1 text-xs text-muted-foreground font-black uppercase tracking-widest">Boutiques • Restaurants • Services</p>
         </div>
 
         <Card>

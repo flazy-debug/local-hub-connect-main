@@ -57,25 +57,39 @@ export default function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Price with promo */}
-          <div className="mt-3 flex items-center gap-2">
-            {(product as any).promoPrice ? (
-              <>
-                <p className="font-display text-lg font-bold text-accent">{formatCFA((product as any).promoPrice)}</p>
-                <p className="text-sm text-muted-foreground line-through">{formatCFA(product.price)}</p>
-              </>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {(product as any).promoPrice ? (
+                <>
+                  <p className="font-display text-lg font-bold text-accent">{formatCFA((product as any).promoPrice)}</p>
+                  <p className="text-xs text-muted-foreground line-through">{formatCFA(product.price)}</p>
+                </>
+              ) : (
+                <p className="font-display text-lg font-bold text-accent">{formatCFA(product.price)}</p>
+              )}
+            </div>
+
+            {/* Availability Logic */}
+            {["restauration", "fast-food"].includes(product.category) ? (
+              <Badge variant="outline" className={`border-none ${product.stock > 0 ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"} text-[10px] font-black uppercase`}>
+                {product.stock > 0 ? "👨‍🍳 En cuisine" : "❌ Épuisé"}
+              </Badge>
             ) : (
-              <p className="font-display text-lg font-bold text-accent">{formatCFA(product.price)}</p>
+              product.stock < 5 && (
+                <span className="text-[10px] font-black uppercase text-destructive animate-pulse">
+                  Plus que {product.stock} !
+                </span>
+              )
             )}
           </div>
 
           {/* Seller info - hidden for commission sellers */}
           {product.sellerSubscription && product.sellerSubscription !== "STANDARD" ? (
-            <div className="mt-2 flex items-center gap-1 border-t pt-2 text-xs text-muted-foreground">
-              <span>Vendu par :</span>
+            <div className="mt-4 flex items-center gap-1 border-t pt-3 text-xs text-muted-foreground transition-colors group-hover:border-accent/20">
               <Link
                 to={`/boutique/${product.sellerId}`}
                 onClick={(e) => e.stopPropagation()}
-                className="font-medium text-foreground hover:text-accent hover:underline"
+                className="font-medium text-foreground/60 transition-colors group-hover:text-accent hover:underline"
               >
                 {product.sellerName}
               </Link>
@@ -84,7 +98,7 @@ export default function ProductCard({ product }: { product: Product }) {
               <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{product.neighborhood}</span>
             </div>
           ) : (
-            <div className="mt-2 border-t pt-2 text-xs text-muted-foreground">
+            <div className="mt-4 border-t pt-3 text-xs text-muted-foreground transition-colors group-hover:border-accent/20">
               <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{product.neighborhood}</span>
             </div>
           )}

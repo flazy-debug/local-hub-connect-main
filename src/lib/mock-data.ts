@@ -1,12 +1,15 @@
 import { Product, Shop, Category, Order, Review } from "./types";
 
 export const categories: Category[] = [
-  { id: "mode", name: "Mode & Vêtements", icon: "Shirt" },
-  { id: "electronique", name: "Électronique", icon: "Smartphone" },
-  { id: "maison", name: "Maison & Déco", icon: "Home" },
-  { id: "beaute", name: "Beauté & Bien-être", icon: "Sparkles" },
-  { id: "alimentation", name: "Alimentation", icon: "UtensilsCrossed" },
-  { id: "artisanat", name: "Artisanat Local", icon: "Palette" },
+  { id: "restauration", name: "🍽️ Restaurants", icon: "UtensilsCrossed" },
+  { id: "fast-food", name: "🍔 Fast-Food", icon: "Pizza" },
+  { id: "epicerie", name: "🛒 Épicerie", icon: "ShoppingBasket" },
+  { id: "mode", name: "👗 Mode & Vêtements", icon: "Shirt" },
+  { id: "electronique", name: "📱 Électronique", icon: "Smartphone" },
+  { id: "maison", name: "🏠 Maison & Déco", icon: "Home" },
+  { id: "beaute", name: "✨ Beauté & Bien-être", icon: "Sparkles" },
+  { id: "artisanat", name: "🎨 Artisanat Local", icon: "Palette" },
+  { id: "services", name: "💼 Services Professionnels", icon: "Briefcase" },
 ];
 
 export const neighborhoods = [
@@ -222,7 +225,7 @@ export function generateWhatsAppLink(phone: string, order: {
   buyerName: string;
   buyerPhone: string;
 }): string {
-  const message = `🛒 *Nouvelle Commande sur VoiketMarket* 🚀
+  const message = `🛒 *Nouvelle Commande sur Epuremarket* 🚀
 
 📋 *Détails de la commande :*
 🆔 ID : #${order.id}

@@ -163,9 +163,9 @@ export function PartnerDashboard() {
             </SelectContent>
           </Select>
         </CardHeader>
-        <CardContent className="pt-4 overflow-hidden">
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+        <CardContent className="pt-4 px-2 md:px-6">
+          <div className="h-[350px] w-full relative">
+            <ResponsiveContainer width="100%" height={350}>
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -191,7 +191,7 @@ export function PartnerDashboard() {
               </AreaChart>
             </ResponsiveContainer>
             {chartData[0]?.isMock && (
-              <p className="text-[10px] text-center text-muted-foreground mt-4 font-bold uppercase tracking-widest opacity-50">Démonstration Sourcing (En attente de vos premiers gains)</p>
+              <p className="text-[10px] text-center text-muted-foreground mt-4 font-bold uppercase tracking-widest opacity-50">Démonstration Epuremarket (En attente de vos premiers gains)</p>
             )}
           </div>
         </CardContent>
@@ -234,7 +234,7 @@ export function PartnerDashboard() {
                       <h4 className="font-black text-sm text-primary uppercase truncate">{p.name}</h4>
                       <div className="mt-4 flex justify-between items-end border-t pt-4">
                         <div>
-                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Achat Epure</p>
+                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Coût Sourcing</p>
                            <p className="text-sm font-bold text-slate-400">{formatCFA(p.supplier_price || 0)}</p>
                         </div>
                         <div className="text-right">

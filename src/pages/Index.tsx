@@ -19,6 +19,9 @@ const categoryIcons: Record<string, React.ReactNode> = {
   Sparkles: <span className="text-2xl">✨</span>,
   UtensilsCrossed: <span className="text-2xl">🍽️</span>,
   Palette: <span className="text-2xl">🎨</span>,
+  Pizza: <span className="text-2xl">🍕</span>,
+  ShoppingBasket: <span className="text-2xl">🧺</span>,
+  Briefcase: <span className="text-2xl">💼</span>,
 };
 
 export default function Index() {
@@ -99,31 +102,50 @@ export default function Index() {
             transition={{ duration: 0.6 }}
             className="mx-auto max-w-2xl text-center"
           >
-            <h1 className="font-display text-3xl font-bold leading-tight md:text-5xl lg:text-6xl">
-              Achetez local,{" "}
-              <span className="text-accent">soutenez</span> votre quartier
+            <h1 className="font-display text-3xl font-black leading-tight md:text-5xl lg:text-7xl text-white">
+              Le marché digital de <span className="text-accent underline decoration-4 underline-offset-8">Lomé</span>
             </h1>
-            <p className="mt-4 text-lg opacity-80 md:text-xl">
-              La marketplace qui connecte les boutiques de votre quartier et les particuliers.
-              Paiement Mobile Money sécurisé, retrait en boutique ou livraison.
+            <p className="mt-6 text-lg opacity-90 md:text-xl font-medium text-white/80">
+              Boutiques, Restaurants & Services. 
+              Paiement Mobile Money sécurisé, retrait ou livraison.
             </p>
 
-            <div className="mt-8 flex items-center gap-2 rounded-xl bg-card/10 p-2 backdrop-blur-sm">
-              <Search className="ml-2 h-5 w-5 opacity-60" />
-              <Input
-                placeholder="Rechercher un produit, une boutique..."
-                className="border-0 bg-transparent text-primary-foreground placeholder:text-primary-foreground/50 focus-visible:ring-0"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-              <Button 
-                onClick={handleSearch}
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 md:w-auto" 
-                size="lg"
-              >
-                Rechercher
-              </Button>
+            <div className="mt-10 flex flex-col gap-4">
+              <div className="flex items-center gap-2 rounded-2xl bg-white/10 p-2 backdrop-blur-md border border-white/20 shadow-2xl">
+                <Search className="ml-2 h-5 w-5 text-white/60" />
+                <Input
+                  placeholder="Rechercher à Lomé (Pizza, Coiffeur, Robe...)"
+                  className="border-0 bg-transparent text-white placeholder:text-white/40 focus-visible:ring-0 text-lg h-12"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+                <Button 
+                  onClick={handleSearch}
+                  className="hidden md:flex bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl h-12 px-8 font-bold" 
+                >
+                  Trouver
+                </Button>
+              </div>
+
+              {/* Rapid Filters */}
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Link to="/catalogue?category=restauration">
+                  <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6 font-bold gap-2 shadow-lg shadow-orange-500/20">
+                    🍽️ Restaurants
+                  </Button>
+                </Link>
+                <Link to="/catalogue?category=mode">
+                  <Button variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-none rounded-full px-6 font-bold backdrop-blur-sm">
+                    🛍️ Boutiques
+                  </Button>
+                </Link>
+                <Link to="/catalogue?category=services">
+                  <Button variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-none rounded-full px-6 font-bold backdrop-blur-sm">
+                    💼 Services
+                  </Button>
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>

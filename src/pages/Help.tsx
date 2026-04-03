@@ -107,6 +107,31 @@ export default function Help() {
                   ))}
                 </Accordion>
               </section>
+
+              <section className="pt-6 border-t border-slate-100">
+                <div className="flex items-center gap-3 mb-6">
+                  <ShieldCheck className="text-destructive h-5 w-5" />
+                  <h2 className="text-xl font-bold uppercase tracking-widest text-destructive">📜 Produits Interdits & Conformité</h2>
+                </div>
+                <div className="bg-red-50/50 rounded-2xl p-6 border border-red-100">
+                  <p className="text-sm text-red-800 font-semibold mb-4">
+                    Pour garantir la sécurité de la communauté et l'éligibilité aux publicités (Facebook Ads), les articles suivants sont strictement interdits sur Epuremarket :
+                  </p>
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-red-700/80 list-disc pl-4 font-medium">
+                    <li>Tabac et produits connexes (Cigarettes, Vapes)</li>
+                    <li>Alcool et boissons alcoolisées non autorisées</li>
+                    <li>Armes, munitions et explosifs</li>
+                    <li>Produits de santé et médicaments sur ordonnance</li>
+                    <li>Services ou produits pour adultes / à caractère sexuel</li>
+                    <li>Produits contrefaits ou violation de propriété intellectuelle</li>
+                    <li>Animaux vivants ou espèces protégées</li>
+                    <li>Produits bancaires, crypto-monnaies ou jeux d'argent</li>
+                  </ul>
+                  <p className="mt-4 text-[10px] text-red-600 italic">
+                    Tout compte publiant ces articles sera suspendu sans préavis.
+                  </p>
+                </div>
+              </section>
             </div>
 
             {/* Contact CTA */}
