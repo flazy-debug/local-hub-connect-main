@@ -22,11 +22,12 @@ import { toast } from "sonner";
 import { formatCFA, generateWhatsAppLink } from "@/lib/mock-data";
 import PageTransition from "@/components/PageTransition";
 
-type Section = "stats" | "shops" | "pro" | "commissions" | "disputes";
+type Section = "stats" | "shops" | "partners" | "pro" | "commissions" | "disputes";
 
 const navItems: { id: Section; label: string; icon: any }[] = [
   { id: "stats", label: "Statistiques", icon: BarChart3 },
   { id: "shops", label: "Boutiques", icon: Store },
+  { id: "partners", label: "Partenaires", icon: Users },
   { id: "pro", label: "Forfaits PRO", icon: Crown },
   { id: "commissions", label: "Commissions", icon: Receipt },
   { id: "disputes", label: "Litiges", icon: AlertTriangle },
@@ -75,7 +76,8 @@ export default function AdminPortal() {
   const [disputes, setDisputes] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [disputeDialog, setDisputeDialog] = useState<any>(null);
-  const [adminResponse, setAdminResponse] = useState("");
+  const [editingPartner, setEditingPartner] = useState<any>(null);
+  const [markupValue, setMarkupValue] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
@@ -161,6 +163,32 @@ export default function AdminPortal() {
     setAdminResponse("");
     fetchAll();
   };
+
+  const handlePromotePartner = async (userId: string) => {
+    await supabase.from("profiles").update({
+      subscription_type: "PARTNER",
+      partner_markup_percent: 15, // Default 15%
+    }).eq("user_id", userId);
+    toast.success("Utilisateur promu Partenaire !");
+    fetchAll();
+  };
+
+  const handleUpdateMarkup = async () => {
+    if (!editingPartner) return;
+    const val = parseFloat(markupValue);
+    if (isNaN(val)) return toast.error("Valeur invalide");
+
+    await supabase.from("profiles").update({
+      partner_markup_percent: val
+    }).eq("user_id", editingPartner.user_id);
+    
+    toast.success("Markup mis à jour");
+    setEditingPartner(null);
+    fetchAll();
+  };
+
+  const partners = sellers.filter(s => s.subscription_type === "PARTNER");
+  const candidates = sellers.filter(s => s.subscription_type !== "PARTNER");
 
   return (
     <PageTransition>
@@ -401,6 +429,74 @@ export default function AdminPortal() {
                 </>
               )}
 
+              {/* PARTNERS */}
+              {section === "partners" && (
+                <>
+                  <div className="flex items-center justify-between">
+                     <h2 className="font-display text-xl font-bold">Gestion des Partenaires</h2>
+                     <Badge className="bg-primary text-white">{partners.length} Partenaires</Badge>
+                  </div>
+                  
+                  <div className="grid gap-6">
+                    {/* Active Partners */}
+                    <Card className="border-none shadow-premium rounded-3xl overflow-hidden bg-white">
+                      <CardHeader className="bg-secondary/10 border-b">
+                        <CardTitle className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                           <Users className="h-4 w-4" /> Liste des Partenaires Sourcing
+                        </CardTitle>
+                      </CardHeader>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-[10px] uppercase font-black">Nom / Boutique</TableHead>
+                            <TableHead className="text-[10px] uppercase font-black text-center">Markup (%)</TableHead>
+                            <TableHead className="text-[10px] uppercase font-black">Contact</TableHead>
+                            <TableHead className="text-[10px] uppercase font-black text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {partners.map(p => (
+                            <TableRow key={p.id}>
+                              <TableCell className="font-bold text-sm">{p.shop_name || p.display_name}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="outline" className="font-mono text-accent">+{p.partner_markup_percent || 0}%</Badge>
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground font-mono">{p.whatsapp_number || p.phone}</TableCell>
+                              <TableCell className="text-right">
+                                <Button size="sm" variant="ghost" onClick={() => { setEditingPartner(p); setMarkupValue(String(p.partner_markup_percent || 0)); }}>
+                                  Modifier Markup
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {partners.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground italic">Aucun partenaire actif.</TableCell></TableRow>}
+                        </TableBody>
+                      </Table>
+                    </Card>
+
+                    {/* Potential Partners (Promote) */}
+                    <Card className="border-none shadow-premium rounded-3xl overflow-hidden bg-white/50">
+                      <CardHeader>
+                        <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">Promouvoir un utilisateur</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                          {candidates.slice(0, 10).map(c => (
+                            <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-secondary/20 hover:border-accent/40 transition-colors">
+                              <div>
+                                <p className="text-sm font-bold">{c.display_name || c.shop_name}</p>
+                                <p className="text-[10px] text-muted-foreground">{c.whatsapp_number || "Pas de numéro"}</p>
+                              </div>
+                              <Button size="sm" className="h-8 rounded-lg" onClick={() => handlePromotePartner(c.user_id)}>Promouvoir</Button>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
+
               {/* DISPUTES */}
               {section === "disputes" && (
                 <>
@@ -445,22 +541,26 @@ export default function AdminPortal() {
           </div>
         </div>
 
-        {/* Dispute resolution dialog */}
-        <Dialog open={!!disputeDialog} onOpenChange={() => setDisputeDialog(null)}>
-          <DialogContent>
+        {/* Markup Edit Dialog */}
+        <Dialog open={!!editingPartner} onOpenChange={() => setEditingPartner(null)}>
+          <DialogContent className="rounded-3xl">
             <DialogHeader>
-              <DialogTitle>Résoudre le litige</DialogTitle>
+              <DialogTitle className="font-display font-black uppercase tracking-tight">Ajuster le Markup Partenaire</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{disputeDialog?.reason}</p>
-              <Textarea
-                placeholder="Votre réponse au litige..."
-                value={adminResponse}
-                onChange={(e) => setAdminResponse(e.target.value)}
-              />
-              <Button onClick={() => handleResolveDispute(disputeDialog?.id)} className="w-full">
-                Marquer comme résolu
-              </Button>
+            <div className="space-y-6 pt-4">
+               <div>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Taux de markup (%)</Label>
+                  <Input 
+                    type="number" 
+                    value={markupValue} 
+                    onChange={(e) => setMarkupValue(e.target.value)}
+                    className="h-12 rounded-2xl text-lg font-bold border-2 focus:border-accent"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-2 italic">Ce pourcentage s'ajoute au prix fournisseur lors de la mise en ligne.</p>
+               </div>
+               <Button onClick={handleUpdateMarkup} className="w-full h-12 rounded-2xl bg-primary text-white font-bold text-sm uppercase tracking-widest">
+                  Confirmer la modification
+               </Button>
             </div>
           </DialogContent>
         </Dialog>

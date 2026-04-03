@@ -1,63 +1,72 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, Star, ShieldCheck, Zap, TrendingUp, ArrowRight } from "lucide-react";
+import { Check, Star, ShieldCheck, Zap, TrendingUp, Info, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCFA } from "@/lib/mock-data";
 import PageTransition from "@/components/PageTransition";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const plans = [
   {
-    id: "commission",
+    id: "standard",
     name: "Standard",
     subtitle: "Simple & Gratuit",
     price: "0 CFA / mois",
     highlight: false,
     icon: Zap,
-    color: "text-muted-foreground",
+    color: "text-blue-500",
+    bgColor: "bg-blue-50",
     features: [
-      "Inscription gratuite",
-      "10% de commission / vente",
-      "Notifications WhatsApp",
-      "Boutique personnalisée",
-      "Virement sous 48h",
+      "Inscription immédiate",
+      "Galerie photos illimitée",
+      "Gestion des commandes",
+      "10% Commission plateforme",
+      "4% Frais réseau opérateur",
     ],
-    cta: "Commencer",
+    cta: "Commencer gratuitement",
+    link: "/auth?type=vendeur&plan=standard",
   },
   {
-    id: "monthly_flat",
+    id: "pro",
     name: "PRO",
     subtitle: "Vendeur Sérieux",
     price: "5 000 CFA / mois",
     highlight: true,
     icon: Star,
-    color: "text-primary",
+    color: "text-amber-500",
+    bgColor: "bg-amber-50",
     features: [
-      "0% de commission",
-      "Gardez 100% de vos gains",
+      "Tout le Standard +",
+      "0% Commission plateforme",
+      "Bouton WhatsApp Direct",
       "Badge PRO certifié ⭐",
-      "Visibilité accrue",
-      "Virement Prioritaire",
+      "2 Boosts offerts / mois",
+      "4% Frais réseau opérateur",
     ],
     cta: "Passer PRO",
+    link: "/auth?type=vendeur&plan=pro",
   },
   {
     id: "partner",
     name: "Partenaire",
-    subtitle: "Business Premium",
-    price: "15 000 CFA / mois",
+    subtitle: "Sourcing Premium",
+    price: "GRATUIT",
     highlight: false,
     icon: ShieldCheck,
-    color: "text-accent",
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-50",
     features: [
-      "0% de commission",
-      "Badge Certifié Officiel",
-      "Support WhatsApp 24/7",
-      "5 Boosts produits / mois",
-      "Analyse de marché",
+      "Sur invitation uniquement",
+      "Prix Fournisseur direct",
+      "Markup auto (Admin)",
+      "Zéro gestion client",
+      "Paiements groupés sécurisés",
+      "Accès aux stocks Epure",
     ],
-    cta: "Devenir Partenaire",
+    cta: "Postuler (Admin)",
+    link: "https://wa.me/221770000000?text=Je%20souhaite%20devenir%20Partenaire%20Sourcing",
   },
   {
     id: "boost",
@@ -66,86 +75,101 @@ const plans = [
     price: "1 000 CFA / 3j",
     highlight: false,
     icon: TrendingUp,
-    color: "text-orange-500",
+    color: "text-rose-500",
+    bgColor: "bg-rose-50",
     features: [
-      "Top du catalogue",
+      "Top du catalogue (3 jours)",
       "Badge 🔥 VENTE FLASH",
       "Cible 5x plus de clients",
-      "Idéal pour déstocage",
+      "Notifications push locales",
       "Activation instantanée",
     ],
-    cta: "Booster un produit",
+    cta: "Booster maintenant",
+    link: "/dashboard?tab=ads",
   },
 ];
 
 export default function Pricing() {
   return (
     <PageTransition>
-      <div className="min-h-screen">
-        {/* Hero */}
-        <section className="bg-primary px-4 py-20 text-primary-foreground">
-          <div className="container text-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <Badge className="mb-4 bg-accent/20 text-accent">Tarification</Badge>
-              <h1 className="font-display text-4xl font-bold md:text-5xl">
-                Choisissez votre <span className="text-accent">forfait</span>
+      <div className="min-h-screen bg-[#F8FAFC]">
+        {/* Header */}
+        <section className="relative overflow-hidden bg-[#0A0A0B] pt-24 pb-32 text-white">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-50" />
+          <div className="container relative z-10 text-center">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto max-w-3xl"
+            >
+              <Badge className="mb-6 rounded-full bg-accent/20 px-4 py-1 text-accent border-none text-[11px] font-bold tracking-wider">
+                TRANSPARENCE TOTALE
+              </Badge>
+              <h1 className="font-display text-4xl font-black leading-tight tracking-tight md:text-6xl">
+                Outils puissants, <br />
+                <span className="bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">Gains maximums.</span>
               </h1>
-              <p className="mx-auto mt-4 max-w-xl text-lg opacity-80">
-                Deux options simples. Zéro frais cachés. Commencez gratuitement ou passez PRO pour maximiser vos gains.
+              <p className="mx-auto mt-6 max-w-xl text-lg text-slate-400 leading-relaxed">
+                Choisissez le plan qui correspond à votre ambition. Pas de frais cachés, pas de surprises. 
+                <span className="block mt-2 text-sm text-slate-500">Note : Les frais de réseau (4%) s'appliquent à tous les retraits mobiles.</span>
               </p>
             </motion.div>
           </div>
         </section>
 
-        {/* Plans */}
-        <section className="container -mt-10 pb-16 px-4">
-          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Plans Grid */}
+        <section className="container relative z-20 -mt-16 px-4 pb-20">
+          <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan, i) => (
               <motion.div
                 key={plan.id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
+                className={`${i % 2 === 1 ? "lg:mt-8" : ""} h-full`} // Stairs effect
               >
-                <Card className={`relative h-full overflow-hidden rounded-3xl border-none shadow-xl transition-all hover:shadow-2xl hover:-translate-y-1 ${plan.highlight ? "ring-2 ring-primary bg-primary/5 shadow-primary/10" : "bg-card shadow-black/5"}`}>
+                <Card className={`group relative flex h-full flex-col border-none shadow-2xl transition-all duration-300 hover:shadow-primary/5 hover:-translate-y-2 rounded-[2.5rem] overflow-hidden ${plan.highlight ? "ring-2 ring-accent bg-white" : "bg-white/80 backdrop-blur-md"}`}>
                   {plan.highlight && (
-                    <div className="absolute top-0 right-0">
-                      <div className="bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-lg">
-                        POPULAIRE
-                      </div>
-                    </div>
+                    <div className="absolute top-0 right-0 left-0 h-1.5 bg-accent" />
                   )}
-                  <CardHeader className="text-center pt-8 pb-4">
-                    <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 ${plan.color}`}>
-                      <plan.icon className="h-8 w-8" />
+                  
+                  <CardHeader className="p-8 pb-4">
+                    <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-2xl ${plan.bgColor} ${plan.color} group-hover:scale-110 transition-transform duration-300`}>
+                      <plan.icon className="h-7 w-7" strokeWidth={2.5} />
                     </div>
                     <div>
-                      <CardTitle className="font-display text-2xl font-bold">{plan.name}</CardTitle>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">{plan.subtitle}</p>
+                      <CardTitle className="font-display text-2xl font-bold tracking-tight">{plan.name}</CardTitle>
+                      <p className="mt-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{plan.subtitle}</p>
                     </div>
-                    <div className="mt-4">
-                      <p className="font-display text-2xl font-black text-primary">{plan.price}</p>
+                    <div className="mt-6 flex items-baseline gap-1">
+                      <span className="font-display text-3xl font-black text-slate-900">{plan.price.split(' ')[0]}</span>
+                      <span className="text-sm font-medium text-slate-500">{plan.price.split(' ').slice(1).join(' ')}</span>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-6 flex flex-col justify-between">
-                    <ul className="space-y-3">
+
+                  <CardContent className="flex flex-1 flex-col p-8 pt-0">
+                    <div className="h-[1px] w-full bg-slate-100 mb-8" />
+                    <ul className="flex-1 space-y-4 mb-10">
                       {plan.features.map((f, j) => (
-                        <li key={j} className="flex items-start gap-3 text-[13px]">
-                          <div className="h-5 w-5 rounded-full bg-success/10 flex items-center justify-center shrink-0">
-                            <Check className="h-3 w-3 text-success" />
+                        <li key={j} className="flex items-start gap-3">
+                          <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${plan.bgColor} ${plan.color}`}>
+                            <Check className="h-2.5 w-2.5" strokeWidth={4} />
                           </div>
-                          <span className="text-muted-foreground font-medium">{f}</span>
+                          <span className="text-[13px] font-medium text-slate-600 leading-tight">{f}</span>
                         </li>
                       ))}
                     </ul>
-                    <Link to={plan.id === "boost" ? "/dashboard?tab=ads" : "/devenir-vendeur"} state={{ plan: plan.id }}>
-                      <Button
-                        className={`w-full h-12 rounded-xl text-sm font-bold shadow-lg transition-all ${plan.highlight ? "bg-primary text-primary-foreground hover:scale-105" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
-                        variant="default"
-                      >
-                        {plan.cta}
-                      </Button>
-                    </Link>
+
+                    <Button
+                      asChild
+                      className={`h-14 w-full rounded-2xl text-[13px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
+                        plan.highlight 
+                        ? "bg-accent text-accent-foreground hover:bg-accent/90 shadow-accent/20" 
+                        : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200"
+                      }`}
+                    >
+                      <Link to={plan.link}>{plan.cta}</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -153,30 +177,130 @@ export default function Pricing() {
           </div>
         </section>
 
-        {/* Comparison */}
-        <section className="bg-secondary/50 py-16">
-          <div className="container">
-            <h2 className="text-center font-display text-2xl font-bold">Exemple concret</h2>
-            <div className="mx-auto mt-8 max-w-2xl rounded-xl border bg-card p-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div>
-                  <h3 className="font-display font-semibold">Mode Standard</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">Vous vendez pour <strong>{formatCFA(100000)}</strong> ce mois-ci.</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Commission (10%) : <span className="text-destructive font-medium">-{formatCFA(10000)}</span></p>
-                  <p className="mt-1 text-sm font-bold">Vous recevez : <span className="text-success">{formatCFA(90000)}</span></p>
+        {/* Advanced Math Visualization */}
+        <section className="bg-white py-24 px-4 overflow-hidden">
+          <div className="container relative">
+            <div className="text-center mb-16">
+              <h2 className="font-display text-3xl font-black md:text-4xl text-slate-900">Audit de gains (100k CFA)</h2>
+              <p className="mt-4 text-slate-500">Voyez exactement combien vous recevez selon votre mode de vente.</p>
+            </div>
+
+            <div className="mx-auto max-w-4xl">
+              <div className="grid gap-12 lg:grid-cols-2 flex-items-stretch">
+                {/* Standard Card */}
+                <div className="relative rounded-[2rem] border-2 border-slate-100 p-8 pt-10">
+                  <div className="absolute -top-4 left-8 rounded-full bg-white px-4 py-1 text-[10px] font-bold text-slate-400 border uppercase tracking-widest">
+                    Mode Standard
+                  </div>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-end border-b border-dashed pb-4">
+                      <span className="text-sm font-medium text-slate-400">Total Ventes</span>
+                      <span className="text-xl font-black text-slate-900">{formatCFA(100000)}</span>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-slate-500">Comm. Plateforme (10%)</span>
+                        <span className="font-bold text-rose-500">-{formatCFA(10000)}</span>
+                      </div>
+                      <div className="flex justify-between text-[13px]">
+                        <span className="flex items-center gap-1.5 text-slate-500">
+                          Frais Réseau (4%) 
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger><Info className="h-3 w-3" /></TooltipTrigger>
+                              <TooltipContent>Frais prélevés par les opérateurs mobiles (Orange, Wave, etc.)</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </span>
+                        <span className="font-bold text-rose-400">-{formatCFA(4000)}</span>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-6">
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Gain Net Réel</p>
+                      <p className="text-3xl font-black text-slate-900">{formatCFA(86000)}</p>
+                      <p className="mt-1 text-xs text-slate-400 italic">Retrait Mobile Money inclus</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-lg border-2 border-accent/30 bg-accent/5 p-4">
-                  <h3 className="font-display font-semibold flex items-center gap-1"><ShieldCheck className="h-4 w-4 text-accent" /> Mode PRO</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">Vous vendez pour <strong>{formatCFA(100000)}</strong> ce mois-ci.</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Forfait : <span className="text-muted-foreground">-{formatCFA(5000)}</span></p>
-                  <p className="mt-1 text-sm font-bold">Vous recevez : <span className="text-success">{formatCFA(100000)}</span></p>
-                  <p className="mt-2 text-xs text-accent font-medium flex items-center gap-1"><TrendingUp className="h-3 w-3" /> +{formatCFA(5000)} de bénéfice net</p>
+
+                {/* PRO Card */}
+                <div className="relative rounded-[2rem] border-2 border-accent bg-accent/5 p-8 pt-10 shadow-2xl shadow-accent/10">
+                  <div className="absolute -top-4 left-8 rounded-full bg-accent px-4 py-1 text-[10px] font-bold text-accent-foreground uppercase tracking-widest">
+                    Recommandé : Mode PRO
+                  </div>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-end border-b border-accent/20 pb-4">
+                      <span className="text-sm font-medium text-slate-500">Total Ventes</span>
+                      <span className="text-xl font-black text-slate-900">{formatCFA(100000)}</span>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-slate-500">Abonnement Mensuel</span>
+                        <span className="font-bold text-slate-900">-{formatCFA(5000)}</span>
+                      </div>
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-slate-500 font-semibold text-accent">Comm. Plateforme (0%)</span>
+                        <span className="font-black text-emerald-600">-{formatCFA(0)}</span>
+                      </div>
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-slate-500">Frais Réseau (4%)</span>
+                        <span className="font-bold text-rose-400">-{formatCFA(4000)}</span>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-white p-6 shadow-xl shadow-accent/5">
+                      <p className="text-[10px] font-black uppercase text-accent tracking-widest mb-1 underline">Gain Net Réel</p>
+                      <p className="text-3xl font-black text-slate-900">{formatCFA(91000)}</p>
+                      <div className="mt-3 flex items-center gap-2 text-xs font-bold text-emerald-600">
+                        <TrendingUp className="h-4 w-4" />
+                        <span>+{formatCFA(5000)} de profit pur vs Standard</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Break-even mention */}
+              <div className="mt-12 text-center rounded-3xl bg-slate-900 p-8 text-white">
+                <p className="text-slate-400 text-sm mb-2">Le saviez-vous ?</p>
+                <h4 className="text-xl font-bold">L'abonnement PRO est <span className="text-accent underline">rentabilisé dès 50 000 CFA</span> de ventes par mois.</h4>
+                <p className="mt-4 text-[13px] text-slate-500 max-w-lg mx-auto">Calcul : À 50k de ventes, vous payez 5000 de commission en Standard. En PRO, vous payez 5000 d'abonnement. Au-delà, chaque CFA est 10% plus rentable.</p>
               </div>
             </div>
           </div>
         </section>
+
+        {/* Minimal FAQ/Support */}
+        <section className="container py-20 text-center border-t border-slate-100">
+          <HelpCircle className="mx-auto h-12 w-12 text-slate-200 mb-6" />
+          <h3 className="font-display text-2xl font-bold mb-4">Besoin d'un conseil personnalisé ?</h3>
+          <p className="text-slate-500 mb-8 max-w-md mx-auto">Nos experts vendeurs vous aident à choisir le meilleur mode de croissance pour votre business.</p>
+          <Button asChild variant="outline" className="h-14 px-8 rounded-2xl gap-2 font-bold hover:bg-slate-50">
+            <a href="https://wa.me/221770000000" target="_blank" rel="noreferrer">
+              Parler à un conseiller <ArrowRight className="h-4 w-4" />
+            </a>
+          </Button>
+        </section>
       </div>
     </PageTransition>
+  );
+}
+
+function ArrowRight(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
   );
 }

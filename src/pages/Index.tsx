@@ -10,6 +10,7 @@ import { products, shops, categories } from "@/lib/mock-data";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/lib/types";
+import { useNavigate } from "react-router-dom";
 
 const categoryIcons: Record<string, React.ReactNode> = {
   Shirt: <span className="text-2xl">👗</span>,
@@ -23,6 +24,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
 export default function Index() {
   const [search, setSearch] = useState("");
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBoosted = async () => {
@@ -78,6 +80,12 @@ export default function Index() {
     fetchBoosted();
   }, []);
 
+  const handleSearch = () => {
+    if (search.trim()) {
+      navigate(`/catalogue?q=${encodeURIComponent(search.trim())}`);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -107,8 +115,13 @@ export default function Index() {
                 className="border-0 bg-transparent text-primary-foreground placeholder:text-primary-foreground/50 focus-visible:ring-0"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
-              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 md:w-auto" size="lg">
+              <Button 
+                onClick={handleSearch}
+                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 md:w-auto" 
+                size="lg"
+              >
                 Rechercher
               </Button>
             </div>

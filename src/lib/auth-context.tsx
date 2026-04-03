@@ -7,9 +7,10 @@ interface AuthState {
   user: User | null;
   profile: any | null;
   isSeller: boolean;
+  isPartner: boolean;
   isAdmin: boolean;
   loading: boolean;
-  signUp: (email: string, password: string, displayName: string, role: string, whatsappNumber?: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, role: string, whatsappNumber?: string, plan?: string, shopName?: string, locationNeighborhood?: string) => Promise<void>;
   signIn: (identifier: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [isSeller, setIsSeller] = useState(false);
+  const [isPartner, setIsPartner] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId);
     const roles = (data || []).map((r: any) => r.role);
     setIsSeller(roles.includes("seller"));
+    setIsPartner(roles.includes("partner"));
     setIsAdmin(roles.includes("admin"));
   };
 
@@ -62,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setIsSeller(false);
+          setIsPartner(false);
           setIsAdmin(false);
         }
         setLoading(false);
@@ -81,9 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, displayName: string, role: string, whatsappNumber?: string) => {
+  const signUp = async (email: string, password: string, displayName: string, role: string, whatsappNumber?: string, plan?: string, shopName?: string, locationNeighborhood?: string) => {
     // Map French roles to DB Enum roles
-    const dbRole = role === "vendeur" ? "seller" : "buyer";
+    let dbRole = "buyer";
+    if (role === "vendeur") dbRole = "seller";
+    if (role === "partner") dbRole = "partner";
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -106,10 +112,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const profileData: any = { 
           user_id: data.user.id,
           display_name: displayName,
+          subscription_type: role.toUpperCase(), // Save role in subscription_type as requested
         };
-        if (whatsappNumber) {
-          profileData.whatsapp_number = whatsappNumber;
+        
+        if (whatsappNumber) profileData.whatsapp_number = whatsappNumber;
+        if (shopName) profileData.shop_name = shopName;
+        if (locationNeighborhood) profileData.location_neighborhood = locationNeighborhood;
+        
+        // Handle initial plan enhancements
+        if (role === "vendeur" && plan === "pro") {
+          profileData.subscription_type = "monthly_flat";
+          const expiresAt = new Date();
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+          profileData.pro_expires_at = expiresAt.toISOString();
         }
+
         await supabase.from("profiles").upsert(profileData, { onConflict: 'user_id' });
       } catch (err) {
         console.warn("Ignored manual insert error", err);
@@ -133,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, isSeller, isAdmin, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, isSeller, isPartner, isAdmin, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

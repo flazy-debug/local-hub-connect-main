@@ -27,6 +27,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
+import Help from "./pages/Help";
+import StickyWhatsApp from "@/components/StickyWhatsApp";
 import BoostExpirationManager from "@/components/BoostExpirationManager";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,9 @@ function AnimatedRoutes() {
         <Route path="/verifier-email" element={<VerifyEmail />} />
         <Route path="/devenir-vendeur" element={<DevenirVendeur />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/buyer" element={<Dashboard />} />
+        <Route path="/dashboard/seller" element={<Dashboard />} />
+        <Route path="/dashboard/partner" element={<Dashboard />} />
         <Route path="/vendeur/dashboard" element={<Dashboard />} />
         <Route path="/promo/:id" element={<PromoLanding />} />
         <Route path="/admin" element={<AdminPanel />} />
@@ -55,6 +60,7 @@ function AnimatedRoutes() {
         <Route path="/profil" element={<Profil />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/aide" element={<Help />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
@@ -74,6 +80,7 @@ const App = () => (
             <main className="pb-16 md:pb-0">
               <AnimatedRoutes />
             </main>
+            <StickyWhatsApp />
             <div className="hidden md:block">
               <Footer />
             </div>
