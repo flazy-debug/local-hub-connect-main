@@ -22,10 +22,10 @@ export default function BottomTabBar() {
           const isActive = tab.path === "/" ? location.pathname === "/" : location.pathname.startsWith(tab.path);
           return (
             <Link key={tab.path} to={href}
-              className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors", isActive ? "text-accent" : "text-muted-foreground")}>
-              <tab.icon className={cn("h-6 w-6", isActive && "stroke-[2.5]")} />
-              <span>{tab.label}</span>
-              {isActive && <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-accent" />}
+              className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-3 text-[10px] font-bold transition-all active:scale-95", isActive ? "text-accent" : "text-muted-foreground")}>
+              <tab.icon className={cn("h-6 w-6 mb-0.5", isActive && "stroke-[2.5]")} />
+              <span className="uppercase tracking-tighter">{tab.label}</span>
+              {isActive && <span className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-6 rounded-b-full bg-accent shadow-[0_0_10px_rgba(249,115,22,0.5)]" />}
             </Link>
           );
         })}

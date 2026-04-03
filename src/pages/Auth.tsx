@@ -162,7 +162,7 @@ export default function Auth() {
                     <Label htmlFor="login-identifier">Email ou Téléphone</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="login-identifier" type="text" placeholder="votre@email.com ou +228..." className="pl-9" value={loginIdentifier} onChange={e => setLoginIdentifier(e.target.value)} required />
+                      <Input id="login-identifier" type="text" inputMode="email" placeholder="votre@email.com" className="pl-9" value={loginIdentifier} onChange={e => setLoginIdentifier(e.target.value)} required />
                     </div>
                   </div>
                   <div className="space-y-2">

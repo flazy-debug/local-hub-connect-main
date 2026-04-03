@@ -67,7 +67,8 @@ export default function Cart() {
           .eq("user_id", sellerId)
           .single();
 
-        const commissionRate = sellerProfile?.subscription_type === "monthly_flat" ? 0 : 0.10;
+        const isProOrPartner = sellerProfile?.subscription_type === "monthly_flat" || sellerProfile?.subscription_type === "partner";
+        const commissionRate = isProOrPartner ? 0 : 0.10;
         const GATEWAY_FEE = 0.04;
 
         const orderTotal = sellerItems.reduce((s, i) => s + i.product.price * i.quantity, 0);

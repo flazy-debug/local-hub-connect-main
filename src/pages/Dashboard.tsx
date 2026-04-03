@@ -146,6 +146,14 @@ export default function Dashboard() {
     setSavingShopInfo(false);
   };
 
+  // Auto-calculate price for partners
+  useEffect(() => {
+    if (sellerPlan === "PARTNER" && pSupplierPrice && partnerMarkup > 0) {
+      const calculatedPrice = Math.round(parseInt(pSupplierPrice) * (1 + partnerMarkup / 100));
+      setPPrice(calculatedPrice.toString());
+    }
+  }, [pSupplierPrice, sellerPlan, partnerMarkup]);
+
   const fetchData = async () => {
     if (!user) return;
     setLoadingData(true);
@@ -388,19 +396,20 @@ export default function Dashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                        <Label>{sellerPlan === "PARTNER" ? "Prix d'achat fournisseur (CFA) *" : "Prix (CFA) *"}</Label>
-                       <Input 
-                         type="number" 
-                         placeholder="15000" 
-                         value={sellerPlan === "PARTNER" ? pSupplierPrice : pPrice} 
-                         onChange={e => sellerPlan === "PARTNER" ? setPSupplierPrice(e.target.value) : setPPrice(e.target.value)} 
-                         required 
-                         min={1} 
-                       />
-                       {sellerPlan === "PARTNER" && partnerMarkup > 0 && (
-                         <p className="text-[10px] text-success font-medium">
-                           Prix de vente public estimé: {formatCFA(Math.round(parseInt(pSupplierPrice || "0") * (1 + partnerMarkup / 100)))}
-                         </p>
-                       )}
+                        <Input 
+                          type="number" 
+                          inputMode="numeric"
+                          placeholder="15000" 
+                          value={sellerPlan === "PARTNER" ? pSupplierPrice : pPrice} 
+                          onChange={e => sellerPlan === "PARTNER" ? setPSupplierPrice(e.target.value) : setPPrice(e.target.value)} 
+                          required 
+                          min={1} 
+                        />
+                        {sellerPlan === "PARTNER" && partnerMarkup > 0 && (
+                          <p className="text-[10px] text-success font-medium">
+                            Prix de vente public (marge {partnerMarkup}%): {formatCFA(Math.round(parseInt(pSupplierPrice || "0") * (1 + partnerMarkup / 100)))}
+                          </p>
+                        )}
                     </div>
                     <div className="space-y-2">
                       <Label>Prix promo (CFA)</Label>
