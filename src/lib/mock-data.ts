@@ -206,7 +206,10 @@ export const sampleReviews: Review[] = [
   },
 ];
 
-export function formatCFA(amount: number): string {
+export function formatCFA(amount: number | undefined | null): string {
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    return "0 CFA";
+  }
   return new Intl.NumberFormat("fr-FR").format(amount) + " CFA";
 }
 

@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, MapPin, ShoppingBag, Truck, ArrowLeft, MessageCircle, Store, CheckCircle, Share2 } from "lucide-react";
+import { Star, MapPin, ShoppingBag, Truck, ArrowLeft, MessageCircle, Store, CheckCircle, Share2, ShieldCheck, Package } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 import WishlistButton from "@/components/WishlistButton";
 import FollowButton from "@/components/FollowButton";
 import VerificationBadge from "@/components/VerificationBadge";
@@ -24,6 +26,7 @@ export default function ProductDetail() {
   const [sellerWhatsapp, setSellerWhatsapp] = useState("");
   const [sellerSubscription, setSellerSubscription] = useState("STANDARD");
   const [partnerMarkup, setPartnerMarkup] = useState(0);
+  const [isExemptFromCommission, setIsExemptFromCommission] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">("pickup");
   const [deliveryZone, setDeliveryZone] = useState("Zone A");
@@ -75,7 +78,9 @@ export default function ProductDetail() {
          };
          setProduct(mapped);
          setSellerWhatsapp(sellerProfile?.whatsapp_number || "");
-         setSellerSubscription((sellerProfile as any)?.subscription_type || "STANDARD");
+         const sub = (sellerProfile as any)?.subscription_type || "STANDARD";
+         setSellerSubscription(sub);
+         setIsExemptFromCommission(sub === "monthly_flat" || sub === "PRO" || sub === "partner" || sub === "PARTNER");
          setPartnerMarkup((sellerProfile as any)?.partner_markup_percent || 0);
         setDeliveryMethod(mapped.pickupAvailable ? "pickup" : "delivery");
 
@@ -107,7 +112,8 @@ export default function ProductDetail() {
   const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : product.rating.toString();
   
   // Calculate final price for PARTNER
-  const calculatedPrice = (sellerSubscription === "PARTNER" && (product as any).supplierPrice)
+  const isPartner = sellerSubscription === "PARTNER" || sellerSubscription === "partner";
+  const calculatedPrice = (isPartner && (product as any).supplierPrice)
     ? Math.round((product as any).supplierPrice * (1 + partnerMarkup / 100))
     : product.price;
 
@@ -121,8 +127,9 @@ export default function ProductDetail() {
 
     setIsProcessing(true);
     try {
-      // 4% Reseau + 10% Commission (sauf PRO)
-      const commissionRate = sellerSubscription === "PRO" ? 0 : 0.10;
+      // 4% Reseau + 10% Commission (sauf PRO et PARTNER)
+      const isExempt = sellerSubscription === "monthly_flat" || sellerSubscription === "partner" || sellerSubscription === "PRO" || sellerSubscription === "PARTNER";
+      const commissionRate = isExempt ? 0 : 0.10;
       const GATEWAY_FEE_RATE = 0.04;
       
       const zoneFees: Record<string, number> = { "Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500 };
@@ -253,14 +260,14 @@ export default function ProductDetail() {
 
             {product.promoPrice ? (
               <div className="mt-4 flex items-center gap-3">
-                <p className="font-display text-3xl font-bold text-accent">{formatCFA(product.promoPrice)}</p>
-                <p className="text-lg text-muted-foreground line-through">{formatCFA(product.price)}</p>
-                <Badge className="bg-destructive/10 text-destructive">-{Math.round((1 - product.promoPrice / product.price) * 100)}%</Badge>
+                <p className="font-display text-3xl font-black text-accent tracking-tighter">{formatCFA(product.promoPrice)}</p>
+                <p className="text-lg text-muted-foreground line-through opacity-50">{formatCFA(product.price)}</p>
+                <Badge className="bg-destructive/10 text-destructive border-none font-bold">-{Math.round((1 - product.promoPrice / product.price) * 100)}%</Badge>
               </div>
             ) : (
-              <p className="mt-4 font-display text-3xl font-bold text-accent">
+              <p className="mt-4 font-display text-4xl font-black text-accent tracking-tighter">
                 {formatCFA(calculatedPrice)}
-                {sellerSubscription === "PARTNER" && <span className="ml-2 text-xs font-normal text-muted-foreground">(Prix Direct Partenaire)</span>}
+                {isPartner && <span className="ml-2 text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">(Prix Partenaire)</span>}
               </p>
             )}
 
@@ -294,8 +301,8 @@ export default function ProductDetail() {
             </div>
 
             {/* Order CTA - PRO: WhatsApp, Commission: Direct order */}
-            {sellerSubscription === "PRO" ? (
-              /* PRO sellers: WhatsApp order */
+            {isExemptFromCommission ? (
+              /* PRO/Partner sellers: WhatsApp order */
               <div className="mt-6">
                 {sellerWhatsapp ? (
                   <a
@@ -305,16 +312,29 @@ export default function ProductDetail() {
                       buyerName: profile?.display_name || "", buyerPhone: profile?.phone || "",
                     })}
                     target="_blank" rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-success px-6 py-3 font-semibold text-success-foreground transition-colors hover:bg-success/90"
+                    className="flex w-full items-center justify-center gap-3 rounded-2xl bg-success hover:bg-success/90 px-6 py-4 font-black text-white text-lg shadow-xl shadow-success/20 transition-all active:scale-95"
                   >
-                    <MessageCircle className="h-5 w-5" /> Commander via WhatsApp
+                    <MessageCircle className="h-6 w-6" /> Commander par WhatsApp
                   </a>
                 ) : (
-                  <Button size="lg" disabled className="w-full">Vendeur non joignable</Button>
+                  <Button size="lg" disabled className="w-full rounded-2xl h-14 font-black">Vendeur non joignable</Button>
                 )}
-                <div className="mt-3 flex justify-center">
+                <div className="mt-4 flex justify-center gap-4">
                   <WishlistButton productId={product.id} size="md" />
+                  <Button variant="outline" size="icon" onClick={handleShare} className="h-12 w-12 rounded-xl border-primary/10">
+                    <Share2 className="h-5 w-5" />
+                  </Button>
                 </div>
+                {isPartner && (
+                  <div className="mt-3 p-3 rounded-xl bg-accent/5 border border-accent/10 flex items-start gap-2">
+                    <div className="h-5 w-5 rounded-full bg-accent/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <ShieldCheck className="h-3 w-3 text-accent" />
+                    </div>
+                    <p className="text-[10px] text-accent/80 leading-tight">
+                      <span className="font-bold">PRIX DIRECT :</span> En tant que Partenaire Officiel, le vendeur vous propose des prix grossistes avec une marge réduite et sans commission plateforme.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : !showOrderForm ? (
               <div className="mt-6 flex gap-3">
@@ -327,49 +347,79 @@ export default function ProductDetail() {
               </div>
             ) : (
               /* Inline Order Form - Commission sellers only */
-              <div className="mt-6 space-y-4 rounded-xl border bg-card p-5">
-                <h3 className="font-display font-semibold">Finaliser la commande</h3>
-                <div className="space-y-2"><Label>Nom complet *</Label><Input placeholder="Votre nom" value={buyerName} onChange={e => setBuyerName(e.target.value)} /></div>
-                <div className="space-y-2"><Label>Téléphone *</Label><Input placeholder="+228..." value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} /></div>
-                <div className="space-y-2">
-                  <Label>Quartier *</Label>
-                  <Select value={buyerNeighborhood} onValueChange={setBuyerNeighborhood}>
-                    <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
-                    <SelectContent>{neighborhoods.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
-                  </Select>
+              <Card className="mt-6 space-y-6 border-none bg-white/50 backdrop-blur-sm p-6 shadow-premium rounded-3xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-accent"></div>
+                <h3 className="font-display text-xl font-black text-[#142642]">Finaliser ma commande</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Nom complet</Label>
+                    <Input placeholder="Votre nom" value={buyerName} onChange={e => setBuyerName(e.target.value)} className="h-12 rounded-2xl border-muted/20 bg-white/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Téléphone WhatsApp</Label>
+                    <Input type="tel" inputMode="tel" placeholder="+228..." value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} className="h-12 rounded-2xl border-muted/20 bg-white/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Quartier</Label>
+                    <Select value={buyerNeighborhood} onValueChange={setBuyerNeighborhood}>
+                      <SelectTrigger className="h-12 rounded-2xl border-muted/20 bg-white/50">
+                        <SelectValue placeholder="Choisir" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl border-none shadow-premium">
+                        {neighborhoods.map(n => <SelectItem key={n} value={n} className="rounded-xl my-0.5">{n}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="rounded-lg bg-muted/50 p-3 text-sm space-y-1">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Prix</span><span>{formatCFA(displayPrice)}</span></div>
+
+                <div className="rounded-2xl bg-secondary/20 p-4 space-y-3 shadow-inner">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground font-medium uppercase tracking-tight">Prix Unitaire</span>
+                    <span className="font-bold">{formatCFA(displayPrice)}</span>
+                  </div>
                   {deliveryMethod === "delivery" && (
-                    <div className="space-y-2 mt-2 border-t pt-2">
-                       <Label className="text-[10px] uppercase font-bold text-muted-foreground">Zone de livraison Lomé</Label>
-                       <Select value={deliveryZone} onValueChange={setDeliveryZone}>
-                         <SelectTrigger className="h-8 text-xs">
-                           <SelectValue placeholder="Zone" />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="Zone A">Zone A (Centre-Ville - 500 F)</SelectItem>
-                           <SelectItem value="Zone B">Zone B (Adidogomé - 1000 F)</SelectItem>
-                           <SelectItem value="Zone C">Zone C (Baguida - 1500 F)</SelectItem>
-                           <SelectItem value="Zone D">Zone D (Agoé - 2000 F)</SelectItem>
-                           <SelectItem value="Zone E">Zone E (Davié - 2500 F)</SelectItem>
-                         </SelectContent>
-                       </Select>
-                       <div className="flex justify-between text-xs font-medium italic"><span>Frais zone</span><span>+{formatCFA(deliveryMethod === "delivery" ? ({"Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500}[deliveryZone] || 0) : 0)}</span></div>
+                    <div className="space-y-3 pt-3 border-t border-muted/20">
+                       <div className="flex justify-between items-center">
+                         <Label className="text-[10px] uppercase font-black text-primary tracking-widest">Zone Lomé</Label>
+                         <Select value={deliveryZone} onValueChange={setDeliveryZone}>
+                           <SelectTrigger className="h-8 w-40 text-[10px] font-bold rounded-full bg-white/50 border-none shadow-sm">
+                             <SelectValue placeholder="Zone" />
+                           </SelectTrigger>
+                           <SelectContent className="rounded-2xl border-none shadow-premium">
+                             <SelectItem value="Zone A" className="rounded-xl">Zone A (Centre - 500F)</SelectItem>
+                             <SelectItem value="Zone B" className="rounded-xl">Zone B (Adido - 1000F)</SelectItem>
+                             <SelectItem value="Zone C" className="rounded-xl">Zone C (Bagui - 1500F)</SelectItem>
+                             <SelectItem value="Zone D" className="rounded-xl">Zone D (Agoé - 2000F)</SelectItem>
+                             <SelectItem value="Zone E" className="rounded-xl">Zone E (Davié - 2500F)</SelectItem>
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <div className="flex justify-between text-[10px] font-black italic text-success uppercase tracking-tighter">
+                         <span className="flex items-center gap-1"><Truck className="h-3 w-3" /> Frais de zone</span>
+                         <span>+{formatCFA(deliveryMethod === "delivery" ? ({"Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500}[deliveryZone] || 0) : 0)}</span>
+                       </div>
                     </div>
                   )}
-                  <div className="flex justify-between border-t pt-1 font-bold text-lg"><span>Total à payer</span><span className="text-accent">{formatCFA(displayPrice + (deliveryMethod === "delivery" ? ({"Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500}[deliveryZone] || 0) : 0))}</span></div>
+                  <div className="flex justify-between items-end border-t border-muted/20 pt-3">
+                    <span className="text-xs font-black uppercase tracking-widest text-[#142642]">Total Final</span>
+                    <span className="text-2xl font-black text-accent tracking-tighter leading-none">{formatCFA(displayPrice + (deliveryMethod === "delivery" ? ({"Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500}[deliveryZone] || 0) : 0))}</span>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleOrder} disabled={isProcessing} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20">
-                    <CheckCircle className="mr-2 h-4 w-4" /> {isProcessing ? "Traitement..." : "Confirmer la commande"}
+
+                <div className="flex flex-col gap-3 pt-2">
+                  <Button onClick={handleOrder} disabled={isProcessing} className="w-full bg-accent hover:bg-accent/90 text-white h-14 rounded-2xl font-bold text-lg shadow-xl shadow-accent/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <CheckCircle className="h-5 w-5" /> {isProcessing ? "Traitement..." : "Confirmer ma commande"}
                   </Button>
-                  <Button variant="outline" size="icon" onClick={handleShare} className="shrink-0 border-accent/20 text-accent hover:bg-accent/5 transition-all">
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowOrderForm(false)}>Annuler</Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1 rounded-2xl h-12 border-primary/10 hover:bg-primary/5 text-primary text-xs font-bold uppercase tracking-widest" onClick={() => setShowOrderForm(false)}>
+                      Annuler
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={handleShare} className="h-12 w-12 rounded-2xl border-primary/10 text-primary hover:bg-primary/5 shadow-sm">
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Seller Info */}

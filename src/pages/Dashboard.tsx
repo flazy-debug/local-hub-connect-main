@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Package, ShoppingCart, TrendingUp, Plus, Trash2, Pencil, Megaphone, Bell, Wallet, Tag, Camera, ShieldCheck, Store, Copy, Facebook, Instagram, Link as LinkIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Package, ShoppingCart, TrendingUp, Plus, Trash2, Pencil, Megaphone, Bell, Wallet, Tag, Camera, ShieldCheck, Store, Copy, Facebook, Instagram, Link as LinkIcon, MessageSquare, Clock } from "lucide-react";
 import ImageUpload from "@/components/ImageUpload";
 import VideoUpload from "@/components/VideoUpload";
 import DemoDataGenerator from "@/components/dashboard/DemoDataGenerator";
@@ -22,6 +22,8 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { categories, neighborhoods, formatCFA } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundary";
 
 const statusColors: Record<string, string> = {
   pending: "bg-muted text-muted-foreground", paid: "bg-info/10 text-info",
@@ -46,6 +48,13 @@ export default function Dashboard() {
   const [partnerMarkup, setPartnerMarkup] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+
+  const { tab: queryTab } = Object.fromEntries(new URLSearchParams(window.location.search));
+  const [activeTab, setActiveTab] = useState(queryTab || "products");
+
+  useEffect(() => {
+    if (queryTab) setActiveTab(queryTab);
+  }, [queryTab]);
 
   // Product form
   const [pName, setPName] = useState("");
@@ -155,19 +164,24 @@ export default function Dashboard() {
   }, [pSupplierPrice, sellerPlan, partnerMarkup]);
 
   const fetchData = async () => {
-    if (!user) return;
-    setLoadingData(true);
-    const [prodRes, ordRes, txRes, promoRes] = await Promise.all([
-      supabase.from("products").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("orders").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("transactions").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("promo_codes").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
-    ]);
-    setProducts(prodRes.data || []);
-    setOrders(ordRes.data || []);
-    setTransactions(txRes.data || []);
-    setPromoCodes(promoRes.data || []);
-    setLoadingData(false);
+    try {
+      if (!user) return;
+      setLoadingData(true);
+      const [prodRes, ordRes, txRes, promoRes] = await Promise.all([
+        supabase.from("products").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("orders").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("transactions").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("promo_codes").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
+      ]);
+      setProducts(prodRes.data || []);
+      setOrders(ordRes.data || []);
+      setTransactions(txRes.data || []);
+      setPromoCodes(promoRes.data || []);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -270,29 +284,28 @@ export default function Dashboard() {
   };
 
   // Wallet stats
-  const totalSales = transactions.reduce((s, t) => s + t.amount_total, 0);
-  const totalGatewayFee = transactions.reduce((s, t) => s + (t.gateway_fee || 0), 0);
-  const totalPlatformFee = transactions.reduce((s, t) => s + (t.platform_commission || 0), 0);
+  const totalSales = (transactions || []).reduce((s, t) => s + (t.amount_total || 0), 0);
+  const totalGatewayFee = (transactions || []).reduce((s, t) => s + (t.gateway_fee || 0), 0);
+  const totalPlatformFee = (transactions || []).reduce((s, t) => s + (t.platform_commission || 0), 0);
   
-  const completedPayout = transactions.filter(t => t.status === "completed").reduce((s, t) => s + t.seller_payout, 0);
-  const escrowBalance = transactions.filter(t => t.status === "escrow").reduce((s, t) => s + t.seller_payout, 0);
+  const completedPayout = (transactions || []).filter(t => t?.status === "completed").reduce((s, t) => s + (t.seller_payout || 0), 0);
+  const escrowBalance = (transactions || []).filter(t => t?.status === "escrow").reduce((s, t) => s + (t.seller_payout || 0), 0);
   const availableBalance = completedPayout;
-  const totalOrders = orders.length;
-  const totalProducts = products.length;
+  const totalOrders = (orders || []).length;
+  const totalProducts = (products || []).length;
 
   if (authLoading || loadingData) {
     return <div className="flex min-h-[60vh] items-center justify-center"><p className="text-muted-foreground">Chargement...</p></div>;
   }
 
+  if (!user) {
+    return null;
+  }
 
-  const { tab: queryTab } = Object.fromEntries(new URLSearchParams(window.location.search));
-  const [activeTab, setActiveTab] = useState(queryTab || "products");
 
-  useEffect(() => {
-    if (queryTab) setActiveTab(queryTab);
-  }, [queryTab]);
 
   return (
+    <DashboardErrorBoundary>
     <div className="min-h-screen bg-secondary/30 pb-24 pt-4 md:py-8">
       <div className="container px-4">
         <div className="mb-6 flex items-center justify-between">
@@ -611,29 +624,35 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:hidden">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {products.map(p => (
-                  <Card key={p.id} className="overflow-hidden border-none shadow-sm rounded-2xl">
-                    <div className="flex p-3 gap-3">
-                      <div className="h-20 w-20 rounded-xl bg-muted overflow-hidden shrink-0">
-                        <img src={p.images?.[0]} alt="" className="h-full w-full object-cover" />
+                  <Card key={p.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm">
+                    <div className="flex p-3 gap-4">
+                      <div className="h-24 w-24 rounded-2xl bg-muted overflow-hidden shrink-0 shadow-inner">
+                        <img src={p.images?.[0]} alt="" className="h-full w-full object-cover transition-transform hover:scale-110 duration-500" />
                       </div>
-                      <div className="flex-1 min-w-0 flex flex-col justify-center">
-                        <h4 className="font-bold text-sm truncate">{p.name}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-primary font-bold">{formatCFA(p.price)}</span>
-                          {p.promo_price && <span className="text-[10px] text-muted-foreground line-through">{formatCFA(p.price)}</span>}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                        <div>
+                          <h4 className="font-bold text-sm truncate text-primary">{p.name}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-primary font-black text-base">{formatCFA(p.price)}</span>
+                            {p.promo_price && <span className="text-[10px] text-muted-foreground line-through opacity-60">{formatCFA(p.promo_price)}</span>}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className="text-[10px] py-0 h-5">Stock: {p.stock}</Badge>
-                          {p.is_boosted && <Badge className="bg-orange-500 text-[10px] py-0 h-5">BOOSTÉ</Badge>}
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[9px] py-0 h-5 border-primary/10 bg-primary/5">Stock: {p.stock}</Badge>
+                          {p.is_boosted && (
+                            <Badge className="bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[9px] py-0 h-5 border-none shadow-sm">
+                              🔥 BOOSTÉ
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
                         <Button 
                           variant="secondary" 
                           size="icon" 
-                          className="h-9 w-9 rounded-xl"
+                          className="h-10 w-10 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
                           onClick={() => setEditProduct(p)}
                         >
                           <Pencil className="h-4 w-4 text-primary" />
@@ -641,7 +660,7 @@ export default function Dashboard() {
                         <Button 
                           variant="secondary" 
                           size="icon" 
-                          className="h-9 w-9 rounded-xl"
+                          className="h-10 w-10 rounded-xl bg-accent/5 hover:bg-accent/10 transition-colors"
                           onClick={() => { setSelectedBoostProduct(p); setBoostDialogOpen(true); }}
                         >
                           <Megaphone className="h-4 w-4 text-accent" />
@@ -693,33 +712,37 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:hidden">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {orders.map(o => (
-                  <Card key={o.id} className="overflow-hidden border-none shadow-sm rounded-2xl p-4 space-y-3">
+                  <Card key={o.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm p-4 space-y-4">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-[10px] font-mono text-muted-foreground uppercase">{o.order_number}</p>
-                        <h4 className="font-bold text-sm">{o.buyer_name}</h4>
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest leading-none">#{o.order_number}</p>
+                        <h4 className="font-bold text-sm text-primary tracking-tight">{o.buyer_name}</h4>
                       </div>
-                      <Badge className={cn("text-[10px] rounded-full", statusColors[o.status])}>
+                      <Badge className={cn("text-[10px] rounded-full px-2 py-0.5 border-none shadow-sm", statusColors[o.status])}>
                         {statusLabels[o.status] || o.status}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Total</span>
-                      <span className="font-bold text-primary">{formatCFA(o.total)}</span>
+                    
+                    <div className="flex items-center justify-between py-3 border-t border-b border-dashed">
+                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Commande</span>
+                      <span className="text-base font-black text-accent">{formatCFA(o.total)}</span>
                     </div>
-                    <div className="pt-2 flex gap-2">
+
+                    <div className="flex gap-2">
                       {o.status === "paid" && (
-                        <Button className="flex-1 bg-primary text-primary-foreground h-11 rounded-xl" onClick={() => updateOrderStatus(o.id, "preparing")}>Préparer</Button>
+                        <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-11 rounded-2xl font-bold shadow-lg shadow-primary/20" onClick={() => updateOrderStatus(o.id, "preparing")}>
+                          Préparer le colis
+                        </Button>
                       )}
                       {o.status === "preparing" && (
-                        <Button className="flex-1 bg-accent text-accent-foreground h-11 rounded-xl" onClick={() => openShippingProof(o.id)}>
+                        <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground h-11 rounded-2xl font-bold shadow-lg shadow-accent/20" onClick={() => openShippingProof(o.id)}>
                           <Camera className="h-4 w-4 mr-2" /> Expédier
                         </Button>
                       )}
-                      <Button variant="secondary" className="h-11 rounded-xl" onClick={() => window.open(`https://wa.me/${o.buyer_phone?.replace(/\+/g, '')}?text=Bonjour%20${o.buyer_name},%20concernant%20votre%20commande%20${o.order_number}...`)}>
-                        <Facebook className="h-4 w-4" /> {/* WhatsApp icon proxy */}
+                      <Button variant="secondary" className="h-11 w-12 rounded-2xl bg-success/10 text-success hover:bg-success hover:text-white transition-all border-none" onClick={() => window.open(`https://wa.me/${o.buyer_phone?.replace(/\+/g, '')}?text=Bonjour%20${o.buyer_name},%20concernant%20votre%20commande%20${o.order_number}...`)}>
+                        <MessageSquare className="h-5 w-5" />
                       </Button>
                     </div>
                   </Card>
@@ -764,38 +787,57 @@ export default function Dashboard() {
 
           {/* Transactions */}
           <TabsContent value="transactions" className="mt-4">
-            <Card>
-              <CardContent className="p-0">
-                {transactions.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground"><TrendingUp className="mx-auto h-12 w-12 opacity-30" /><p className="mt-3">Aucune transaction.</p></div>
-                ) : (
-                  <Table>
-                    <TableHeader><TableRow>
-                      <TableHead>Date</TableHead><TableHead>Montant total</TableHead><TableHead>Commission</TableHead><TableHead>Votre part</TableHead><TableHead>Statut</TableHead>
-                    </TableRow></TableHeader>
-                    <TableBody>
-                      {transactions.map(t => (
-                        <TableRow key={t.id}>
-                          <TableCell>{new Date(t.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                          <TableCell>{formatCFA(t.amount_total)}</TableCell>
-                          <TableCell>
-                            <div className="text-destructive font-bold">-{formatCFA(t.commission_fee)}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">RESEAU (4%): {formatCFA(t.gateway_fee || 0)}</div>
-                            <div className="text-[10px] text-muted-foreground font-medium">SERVICE: {formatCFA(t.platform_commission || 0)}</div>
-                          </TableCell>
-                          <TableCell className="font-bold text-success text-base">{formatCFA(t.seller_payout)}</TableCell>
-                          <TableCell>
-                            <Badge className={t.status === "completed" ? "bg-success/10 text-success" : t.status === "escrow" ? "bg-warning/10 text-warning" : ""}>
-                              {t.status === "completed" ? "Complété" : t.status === "escrow" ? "Séquestre" : t.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {transactions.length === 0 ? (
+                <Card className="border-dashed py-12 md:col-span-full">
+                  <CardContent className="flex flex-col items-center justify-center text-center">
+                    <TrendingUp className="h-12 w-12 opacity-20 mb-4" />
+                    <p className="text-muted-foreground">Aucune transaction enregistrée</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                transactions.map(t => (
+                  <Card key={t.id} className="overflow-hidden border-none shadow-premium rounded-3xl bg-white/50 backdrop-blur-sm p-5 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">REÇU LE</p>
+                        <p className="text-xs font-bold text-primary">{new Date(t.created_at).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      </div>
+                      <Badge className={cn("text-[10px] rounded-full px-3 py-1 border-none shadow-sm", 
+                        t.status === "completed" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                        {t.status === "completed" ? "Déjà payé" : "En attente (Séquestre)"}
+                      </Badge>
+                    </div>
+
+                    <div className="rounded-2xl bg-secondary/20 p-4 space-y-3">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground font-medium uppercase tracking-tight">Vente brute</span>
+                        <span className="font-bold">{formatCFA(t.amount_total)}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="text-muted-foreground/70 italic">Frais réseau (4%)</span>
+                          <span className="text-destructive">-{formatCFA(t.gateway_fee || 0)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="text-muted-foreground/70 italic">Commission plateforme</span>
+                          <span className="text-destructive">-{formatCFA(t.platform_commission || 0)}</span>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-muted/50 flex justify-between items-center">
+                        <span className="text-xs font-black uppercase tracking-widest">Part Vendeur</span>
+                        <span className="text-lg font-black text-success tracking-tighter">{formatCFA(t.seller_payout)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-[9px] text-muted-foreground/60 px-1 italic">
+                      <span>Transaction ID: {t.id.slice(0, 12)}...</span>
+                      {t.status === "escrow" && <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5" /> Libération auto. sous 48h</span>}
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
 
           {/* Promo Codes */}
@@ -819,30 +861,47 @@ export default function Dashboard() {
                 </DialogContent>
               </Dialog>
             </div>
-            <Card>
-              <CardContent className="p-0">
-                {promoCodes.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground"><Tag className="mx-auto h-12 w-12 opacity-30" /><p className="mt-3">Aucun code promo.</p></div>
-                ) : (
-                  <Table>
-                    <TableHeader><TableRow>
-                      <TableHead>Code</TableHead><TableHead>Réduction</TableHead><TableHead>Utilisations</TableHead><TableHead>Statut</TableHead><TableHead>Actions</TableHead>
-                    </TableRow></TableHeader>
-                    <TableBody>
-                      {promoCodes.map(pc => (
-                        <TableRow key={pc.id}>
-                          <TableCell className="font-mono font-bold">{pc.code}</TableCell>
-                          <TableCell>{pc.discount_percent}%</TableCell>
-                          <TableCell>{pc.uses_count}{pc.max_uses ? ` / ${pc.max_uses}` : ""}</TableCell>
-                          <TableCell><Badge className={pc.is_active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}>{pc.is_active ? "Actif" : "Inactif"}</Badge></TableCell>
-                          <TableCell><Button variant="ghost" size="icon" onClick={() => deletePromoCode(pc.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {promoCodes.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground bg-white/50 backdrop-blur-sm rounded-3xl border border-dashed md:col-span-full">
+                  <Tag className="mx-auto h-12 w-12 opacity-20 mb-3" />
+                  <p>Aucun code promo créé</p>
+                  <Button variant="link" className="text-accent text-[11px]" onClick={() => setPromoDialogOpen(true)}>Lancer ma première promo</Button>
+                </div>
+              ) : (
+                promoCodes.map(pc => (
+                  <Card key={pc.id} className="overflow-hidden border-none shadow-premium rounded-3xl bg-white/50 backdrop-blur-sm p-5 space-y-4 relative">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                          <Tag className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-black tracking-widest text-[#142642]">{pc.code}</p>
+                          <Badge className="bg-success/10 text-success border-none text-[9px] px-2 py-0">-{pc.discount_percent}%</Badge>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10" onClick={() => deletePromoCode(pc.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-muted/30">
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] text-muted-foreground uppercase font-bold">UTILISATIONS</p>
+                        <p className="text-xs font-bold text-primary">{pc.uses_count} {pc.max_uses ? `/ ${pc.max_uses}` : "Illimitée"}</p>
+                      </div>
+                      <div className="space-y-0.5 text-right">
+                        <p className="text-[9px] text-muted-foreground uppercase font-bold">STATUT</p>
+                        <p className={cn("text-xs font-bold", pc.is_active ? "text-success" : "text-muted-foreground")}>
+                          {pc.is_active ? "CODE ACTIF" : "DÉSACTIVÉ"}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="ads" className="mt-4">
@@ -990,5 +1049,6 @@ export default function Dashboard() {
       </Dialog>
     </div>
   </div>
+    </DashboardErrorBoundary>
   );
 }

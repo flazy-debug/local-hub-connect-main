@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   BarChart3, Users, AlertTriangle, Receipt, Store, Shield,
   ChevronRight, RefreshCw, Crown, Ban, MessageCircle, Clock,
-  TrendingUp, ShoppingBag, AlertCircle
+  TrendingUp, ShoppingBag, AlertCircle, Phone, MapPin, XCircle, CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,18 +84,23 @@ export default function AdminPortal() {
   }, [user, isAdmin, authLoading]);
 
   const fetchAll = async () => {
-    setLoadingData(true);
-    const [sellersRes, txRes, ordRes, dispRes] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("transactions").select("*").order("created_at", { ascending: false }),
-      supabase.from("orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("disputes").select("*").order("created_at", { ascending: false }),
-    ]);
-    setSellers(sellersRes.data || []);
-    setTransactions(txRes.data || []);
-    setOrders(ordRes.data || []);
-    setDisputes(dispRes.data || []);
-    setLoadingData(false);
+    try {
+      setLoadingData(true);
+      const [sellersRes, txRes, ordRes, dispRes] = await Promise.all([
+        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase.from("transactions").select("*").order("created_at", { ascending: false }),
+        supabase.from("orders").select("*").order("created_at", { ascending: false }),
+        supabase.from("disputes").select("*").order("created_at", { ascending: false }),
+      ]);
+      setSellers(sellersRes.data || []);
+      setTransactions(txRes.data || []);
+      setOrders(ordRes.data || []);
+      setDisputes(dispRes.data || []);
+    } catch (error) {
+      console.error("Error fetching admin data:", error);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   if (authLoading || loadingData) {
@@ -228,70 +233,70 @@ export default function AdminPortal() {
               {section === "shops" && (
                 <>
                   <h2 className="font-display text-xl font-bold">Gestion des Boutiques</h2>
-                  <div className="rounded-xl border overflow-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Boutique</TableHead>
-                          <TableHead>Quartier</TableHead>
-                          <TableHead>Abonnement</TableHead>
-                          <TableHead>Expiration PRO</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {shops.map((s) => {
-                          const status = getProStatus(s);
-                          return (
-                            <TableRow key={s.id}>
-                              <TableCell className="font-medium">{s.shop_name || s.display_name}</TableCell>
-                              <TableCell>{s.neighborhood || "—"}</TableCell>
-                              <TableCell>
-                                {s.subscription_type === "monthly_flat" ? (
-                                  <Badge className="bg-accent text-accent-foreground">PRO</Badge>
-                                ) : (
-                                  <Badge variant="secondary">Commission 10%</Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {s.subscription_type === "monthly_flat" ? (
-                                  s.pro_expires_at ? (
-                                    <span className={
-                                      status === "expired" ? "text-destructive font-medium" :
-                                      status === "expiring" ? "text-warning font-medium" : "text-success"
-                                    }>
-                                      {new Date(s.pro_expires_at).toLocaleDateString("fr-FR")}
-                                      {status === "expired" && " (Expiré)"}
-                                      {status === "expiring" && " (Bientôt)"}
-                                    </span>
-                                  ) : <span className="text-success">Actif</span>
-                                ) : "—"}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex gap-1 flex-wrap">
-                                  {s.subscription_type !== "monthly_flat" && (
-                                    <Button size="sm" variant="outline" onClick={() => handleSetPro(s.user_id)}>
-                                      <Crown className="mr-1 h-3 w-3" /> Passer PRO
-                                    </Button>
-                                  )}
-                                  {s.subscription_type === "monthly_flat" && (status === "expired" || status === "expiring") && (
-                                    <Button size="sm" variant="outline" onClick={() => handleSetPro(s.user_id)}>
-                                      <RefreshCw className="mr-1 h-3 w-3" /> Renouveler
-                                    </Button>
-                                  )}
-                                  <Button size="sm" variant="destructive" onClick={() => handleSuspend(s.user_id)}>
-                                    <Ban className="mr-1 h-3 w-3" /> Suspendre
-                                  </Button>
+                  <div className="grid gap-4">
+                    {shops.map((s) => {
+                      const status = getProStatus(s);
+                      return (
+                        <Card key={s.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                  {s.shop_name?.[0].toUpperCase()}
                                 </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                        {shops.length === 0 && (
-                          <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucune boutique enregistrée</TableCell></TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                                <div>
+                                  <h4 className="font-bold text-sm">{s.shop_name || s.display_name}</h4>
+                                  <p className="text-[10px] text-muted-foreground uppercase">{s.neighborhood || "N/A"}</p>
+                                </div>
+                              </div>
+                              {s.subscription_type === "monthly_flat" ? (
+                                <Badge className="bg-accent text-accent-foreground text-[10px]">PRO</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-[10px]">10% Comm.</Badge>
+                              )}
+                            </div>
+                            
+                            <div className="space-y-2 mb-4">
+                              <div className="flex items-center gap-2 text-xs">
+                                <Phone className="h-3 w-3 text-muted-foreground" />
+                                <span className="font-mono">{s.whatsapp_number || s.phone}</span>
+                              </div>
+                              {s.subscription_type === "monthly_flat" && (
+                                <div className="flex items-center gap-2 text-xs">
+                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                  <span className={
+                                    status === "expired" ? "text-destructive font-medium" :
+                                    status === "expiring" ? "text-warning font-medium" : "text-success"
+                                  }>
+                                    {status === "expired" ? "Expiré" : status === "expiring" ? "Expire bientôt" : "Actif"}
+                                    {s.pro_expires_at && ` (${new Date(s.pro_expires_at).toLocaleDateString()})`}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex gap-2 flex-wrap pt-3 border-t">
+                              {s.subscription_type !== "monthly_flat" && (
+                                <Button size="sm" variant="outline" className="flex-1 h-9 rounded-lg text-[11px]" onClick={() => handleSetPro(s.user_id)}>
+                                  <Crown className="mr-1 h-3 w-3 text-accent" /> Passer PRO
+                                </Button>
+                              )}
+                              {s.subscription_type === "monthly_flat" && (status === "expired" || status === "expiring") && (
+                                <Button size="sm" variant="outline" className="flex-1 h-9 rounded-lg text-[11px]" onClick={() => handleSetPro(s.user_id)}>
+                                  <RefreshCw className="mr-1 h-3 w-3" /> Renouveler
+                                </Button>
+                              )}
+                              <Button size="sm" variant="destructive" className="flex-1 h-9 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border-none text-[11px]" onClick={() => handleSuspend(s.user_id)}>
+                                <Ban className="mr-1 h-3 w-3" /> Suspendre
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    {shops.length === 0 && (
+                      <div className="text-center text-muted-foreground py-12">Aucune boutique enregistrée</div>
+                    )}
                   </div>
                 </>
               )}
@@ -347,41 +352,51 @@ export default function AdminPortal() {
               {section === "commissions" && (
                 <>
                   <h2 className="font-display text-xl font-bold">Journal des Commissions</h2>
-                  <div className="rounded-xl border overflow-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Vendeur</TableHead>
-                          <TableHead className="text-right">Prix Vente</TableHead>
-                          <TableHead className="text-right">Commission (10%)</TableHead>
-                          <TableHead className="text-right">À reverser</TableHead>
-                          <TableHead>Statut</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {transactions.filter(t => t.commission_fee > 0).map((tx) => {
-                          const seller = sellers.find(s => s.user_id === tx.seller_id);
-                          return (
-                            <TableRow key={tx.id}>
-                              <TableCell className="text-sm">{new Date(tx.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                              <TableCell className="font-medium">{seller?.shop_name || seller?.display_name || "—"}</TableCell>
-                              <TableCell className="text-right">{formatCFA(tx.amount_total)}</TableCell>
-                              <TableCell className="text-right text-accent font-medium">{formatCFA(tx.commission_fee)}</TableCell>
-                              <TableCell className="text-right">{formatCFA(tx.seller_payout)}</TableCell>
-                              <TableCell>
-                                <Badge variant={tx.status === "released" ? "default" : "secondary"}>
-                                  {tx.status === "escrow" ? "En attente" : tx.status === "released" ? "Reversé" : tx.status}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                        {transactions.filter(t => t.commission_fee > 0).length === 0 && (
-                          <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune transaction avec commission</TableCell></TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                  <div className="grid gap-4">
+                    {transactions.filter(t => t.commission_fee > 0).map((tx) => {
+                      const seller = sellers.find(s => s.user_id === tx.seller_id);
+                      return (
+                        <Card key={tx.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="space-y-1">
+                                <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Commission</p>
+                                <p className="text-lg font-black text-accent">{formatCFA(tx.commission_fee)}</p>
+                              </div>
+                              <Badge variant={tx.status === "released" ? "default" : "secondary"} className="text-[10px]">
+                                {tx.status === "escrow" ? "Séquestre" : tx.status === "released" ? "Reversé" : tx.status}
+                              </Badge>
+                            </div>
+
+                            <div className="bg-secondary/20 rounded-xl p-3 mb-2 space-y-2">
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-muted-foreground">Boutique</span>
+                                <span className="font-bold">{seller?.shop_name || "N/A"}</span>
+                              </div>
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-muted-foreground">Prix Vente</span>
+                                <span className="font-medium">{formatCFA(tx.amount_total)}</span>
+                              </div>
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-muted-foreground">Part Vendeur</span>
+                                <span className="font-medium text-success">{formatCFA(tx.seller_payout)}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+                              <span>ID: {tx.id.slice(0, 8)}</span>
+                              <span>{new Date(tx.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    {transactions.filter(t => t.commission_fee > 0).length === 0 && (
+                      <div className="text-center text-muted-foreground py-12 bg-white/50 backdrop-blur-sm rounded-2xl border border-dashed">
+                        <Receipt className="mx-auto h-12 w-12 opacity-20 mb-3" />
+                        <p>Aucune transaction avec commission</p>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

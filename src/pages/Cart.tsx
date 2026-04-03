@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Minus, ShoppingBag, Truck, ArrowLeft, MessageCircle } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, Truck, ArrowLeft, MessageCircle, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, getTotal, getServiceFee, getGrandTotal, clearCart } = useCart();
@@ -159,134 +161,173 @@ export default function Cart() {
           {/* Cart Items */}
           <div className="space-y-4 lg:col-span-2">
             {items.map((item) => (
-              <div key={item.product.id} className="flex gap-4 rounded-xl border bg-card p-4">
-                <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-secondary">
-                  <img src={item.product.images[0]} alt={item.product.name} className="h-full w-full object-cover" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-xs text-muted-foreground">{item.product.sellerName}</p>
-                      <h3 className="font-display font-semibold">{item.product.name}</h3>
-                    </div>
-                    <button onClick={() => removeItem(item.product.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+              <Card key={item.product.id} className="overflow-hidden border-none shadow-premium rounded-3xl bg-white/50 backdrop-blur-sm p-4 relative group">
+                <div className="flex gap-4">
+                  <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-muted shadow-inner">
+                    <img src={item.product.images?.[0]} alt={item.product.name} className="h-full w-full object-cover transition-transform group-hover:scale-110 duration-500" />
                   </div>
-
-                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    {item.deliveryMethod === "pickup" ? (
-                      <><ShoppingBag className="h-3 w-3" /> Retrait en boutique</>
-                    ) : (
-                      <><Truck className="h-3 w-3" /> Livraison</>
-                    )}
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border text-foreground hover:bg-secondary"
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest truncate">{item.product.sellerName}</p>
+                        <h3 className="font-bold text-sm text-primary truncate leading-tight mt-0.5">{item.product.name}</h3>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => removeItem(item.product.id)} 
+                        className="h-8 w-8 rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-all"
                       >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border text-foreground hover:bg-secondary"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <p className="font-display font-bold text-accent">{formatCFA(item.product.price * item.quantity)}</p>
+
+                    <div className="mt-1 flex items-center gap-3 text-[10px] font-bold uppercase tracking-tighter text-muted-foreground/60">
+                      {item.deliveryMethod === "pickup" ? (
+                        <div className="flex items-center gap-1 bg-secondary/30 px-2 py-0.5 rounded-full"><ShoppingBag className="h-2.5 w-2.5" /> Retrait</div>
+                      ) : (
+                        <div className="flex items-center gap-1 bg-accent/10 text-accent px-2 py-0.5 rounded-full"><Truck className="h-2.5 w-2.5" /> Livraison</div>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center bg-secondary/40 rounded-xl p-1 border border-white/50 shadow-sm">
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          className={cn("flex h-8 w-8 items-center justify-center rounded-lg transition-colors", 
+                            item.quantity <= 1 ? "text-muted-foreground/30" : "text-primary hover:bg-white/50")}
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="w-10 text-center text-sm font-black text-primary">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-white/50 transition-colors"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <p className="font-black text-accent text-lg tracking-tighter">{formatCFA(item.product.price * item.quantity)}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
 
             {/* Buyer Info Form */}
-            <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-display text-lg font-bold">Vos informations</h3>
-              <div className="mt-4 space-y-4">
+            <Card className="rounded-3xl border-none bg-white/50 backdrop-blur-sm p-6 shadow-premium">
+              <h3 className="font-display text-xl font-black text-[#142642]">Vos informations</h3>
+              <div className="mt-6 space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="buyer-name">Nom complet *</Label>
-                  <Input id="buyer-name" placeholder="Votre nom" value={buyerName} onChange={e => setBuyerName(e.target.value)} required />
+                  <Label htmlFor="buyer-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Nom complet</Label>
+                  <Input id="buyer-name" placeholder="Ex: Jean Koffi" value={buyerName} onChange={e => setBuyerName(e.target.value)} required className="h-12 rounded-2xl border-muted/20 bg-white/50 focus:ring-accent/20" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="buyer-phone">Téléphone *</Label>
-                  <Input id="buyer-phone" placeholder="+228..." value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} required pattern="^\+228[0-9]{8}$" title="Doit commencer par +228 suivi de 8 chiffres" />
+                  <Label htmlFor="buyer-phone" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Téléphone WhatsApp</Label>
+                  <Input id="buyer-phone" type="tel" inputMode="tel" placeholder="+228..." value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} required className="h-12 rounded-2xl border-muted/20 bg-white/50 focus:ring-accent/20" />
+                  <p className="text-[10px] text-muted-foreground italic">Le vendeur utilisera ce numéro pour vous contacter.</p>
                 </div>
                 <div className="space-y-2">
-                  <Label>Quartier de livraison *</Label>
+                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Quartier de livraison</Label>
                   <Select value={buyerNeighborhood} onValueChange={setBuyerNeighborhood}>
-                    <SelectTrigger><SelectValue placeholder="Choisir un quartier" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="h-12 rounded-2xl border-muted/20 bg-white/50 focus:ring-accent/20">
+                      <SelectValue placeholder="Choisir un quartier" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-none shadow-premium">
                       {neighborhoods.map(n => (
-                        <SelectItem key={n} value={n}>{n}</SelectItem>
+                        <SelectItem key={n} value={n} className="rounded-xl my-0.5">{n}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Summary */}
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="font-display text-lg font-bold">Résumé</h3>
+          <div className="space-y-6">
+            <Card className="rounded-3xl border-none bg-white/50 backdrop-blur-sm p-6 shadow-premium relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                <ShoppingBag className="h-20 w-20 text-[#142642]" />
+              </div>
+              <h3 className="font-display text-xl font-black text-[#142642] mb-4">Résumé de commande</h3>
 
-            {/* Per-seller breakdown */}
-            {(() => {
-              const groups = items.reduce((acc, item) => {
-                const name = item.product.sellerName;
-                if (!acc[name]) acc[name] = { items: [], total: 0 };
-                acc[name].items.push(item);
-                acc[name].total += item.product.price * item.quantity;
-                return acc;
-              }, {} as Record<string, { items: typeof items; total: number }>);
-              return Object.entries(groups).map(([seller, g]) => (
-                <div key={seller} className="mt-3 rounded-lg border bg-muted/20 p-3">
-                  <p className="text-xs font-semibold text-foreground">{seller}</p>
-                  {g.items.map(i => (
-                    <div key={i.product.id} className="mt-1 flex justify-between text-xs text-muted-foreground">
-                      <span>{i.product.name} × {i.quantity}</span>
-                      <span>{formatCFA(i.product.price * i.quantity)}</span>
+              {/* Per-seller breakdown */}
+              <div className="space-y-3">
+                {(() => {
+                  const groups = items.reduce((acc, item) => {
+                    const name = item.product.sellerName;
+                    if (!acc[name]) acc[name] = { items: [], total: 0 };
+                    acc[name].items.push(item);
+                    acc[name].total += item.product.price * item.quantity;
+                    return acc;
+                  }, {} as Record<string, { items: typeof items; total: number }>);
+                  return Object.entries(groups).map(([seller, g]) => (
+                    <div key={seller} className="rounded-2xl bg-secondary/20 p-4 border border-white/50">
+                      <p className="text-[10px] font-black uppercase text-[#142642] tracking-widest">{seller}</p>
+                      <div className="mt-2 space-y-1">
+                        {g.items.map(i => (
+                          <div key={i.product.id} className="flex justify-between text-xs text-muted-foreground">
+                            <span>{i.product.name} × {i.quantity}</span>
+                            <span className="font-medium">{formatCFA(i.product.price * i.quantity)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-muted/20 flex justify-between text-[11px] font-black uppercase text-[#142642]">
+                        <span>Total boutique</span>
+                        <span>{formatCFA(g.total)}</span>
+                      </div>
                     </div>
-                  ))}
-                  <div className="mt-1 flex justify-between text-xs font-medium">
-                    <span>Sous-total</span><span>{formatCFA(g.total)}</span>
+                  ));
+                })()}
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground font-medium">Sous-total</span>
+                  <span className="font-bold text-primary font-mono">{formatCFA(getTotal())}</span>
+                </div>
+
+                <div className="pt-4 border-t border-dashed border-muted/50">
+                  <div className="flex justify-between items-end">
+                    <span className="text-sm font-black uppercase tracking-widest text-[#142642]">Total Final</span>
+                    <span className="text-2xl font-black text-accent tracking-tighter leading-none">{formatCFA(getGrandTotal())}</span>
                   </div>
                 </div>
-              ));
-            })()}
-
-            <div className="mt-4 space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Sous-total</span>
-                <span className="font-medium">{formatCFA(getTotal())}</span>
               </div>
 
-              <div className="border-t pt-3">
-                <div className="flex justify-between">
-                  <span className="font-display font-bold">Total</span>
-                  <span className="font-display text-lg font-bold text-accent">{formatCFA(getGrandTotal())}</span>
+              <Button
+                className="mt-8 w-full bg-accent hover:bg-accent/90 text-white h-14 rounded-2xl font-bold text-lg shadow-xl shadow-accent/20 transition-all active:scale-95 flex items-center justify-center gap-3"
+                onClick={handleCheckout}
+                disabled={isProcessing}
+              >
+                {isProcessing ? "Traitement..." : (
+                  <>
+                    <MessageCircle className="h-5 w-5" />
+                    Commander par WhatsApp
+                  </>
+                )}
+              </Button>
+              
+              <div className="mt-6 rounded-xl bg-blue-50/50 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Paiement Sécurisé</span>
                 </div>
+                <p className="text-[10px] text-blue-700/70 leading-relaxed italic">
+                  Vos fonds sont gardés en séquestre par la plateforme jusqu'à ce que vous confirmiez la bonne réception de votre colis.
+                </p>
               </div>
-            </div>
-
-            <Button
-              className="mt-6 w-full bg-accent text-accent-foreground hover:bg-accent/90"
-              size="lg"
-              onClick={handleCheckout}
-              disabled={isProcessing}
-            >
-              {isProcessing ? "Traitement..." : "Commander & Payer"}
-            </Button>
-            <p className="mt-3 text-center text-xs text-muted-foreground">
-              💡 Paiement sécurisé — Fonds en séquestre jusqu'à confirmation de réception
-            </p>
-            <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground">
-              <MessageCircle className="h-3 w-3" /> Le vendeur sera notifié par WhatsApp
+            </Card>
+            
+            <div className="text-center space-y-2">
+              <p className="text-[10px] text-muted-foreground/60 uppercase font-bold tracking-[0.2em]">VOIKET Market & Escrow Service</p>
+              <div className="flex justify-center gap-4 opacity-30 grayscale">
+                {/* Minimal placeholder logos for payment trust */}
+                <div className="h-6 w-10 bg-muted rounded"></div>
+                <div className="h-6 w-10 bg-muted rounded"></div>
+                <div className="h-6 w-10 bg-muted rounded"></div>
+              </div>
             </div>
           </div>
         </div>

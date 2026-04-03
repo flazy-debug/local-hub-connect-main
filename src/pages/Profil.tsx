@@ -23,6 +23,7 @@ const statusLabels: Record<string, string> = {
   pending: "En attente", paid: "Payé", preparing: "En préparation",
   shipped: "Expédié", delivered: "Livré", completed: "Terminé",
 };
+import { MessageSquare } from "lucide-react";
 const statusColors: Record<string, string> = {
   pending: "bg-muted text-muted-foreground", paid: "bg-info/10 text-info",
   preparing: "bg-warning/10 text-warning", shipped: "bg-accent/10 text-accent",
@@ -220,86 +221,111 @@ export default function Profil() {
 
           {/* Orders */}
           <TabsContent value="orders" className="mt-4 space-y-4">
-            {orders.length === 0 ? (
-              <Card><CardContent className="py-12 text-center">
-                <ShoppingBag className="mx-auto h-12 w-12 text-muted-foreground/30" />
-                <p className="mt-3 text-muted-foreground">Aucune commande pour le moment.</p>
-                <Link to="/catalogue"><Button className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">Découvrir le catalogue</Button></Link>
-              </CardContent></Card>
-            ) : orders.map((order) => (
-              <Card key={order.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="font-mono text-sm">{order.order_number}</CardTitle>
-                      <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</p>
+            <div className="grid gap-4">
+              {orders.length === 0 ? (
+                <Card className="border-dashed py-16 bg-white/30 backdrop-blur-sm rounded-3xl">
+                  <CardContent className="text-center">
+                    <div className="mx-auto h-20 w-20 rounded-full bg-muted/30 flex items-center justify-center mb-4">
+                      <ShoppingBag className="h-10 w-10 text-muted-foreground/30" />
                     </div>
-                    <Badge className={statusColors[order.status] || ""}>{statusLabels[order.status] || order.status}</Badge>
+                    <p className="font-bold text-lg text-primary">Le panier est vide</p>
+                    <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto">Explorez nos milliers de produits et faites-vous plaisir !</p>
+                    <Link to="/catalogue" className="inline-block mt-6">
+                      <Button className="bg-accent text-accent-foreground hover:bg-accent/90 h-12 px-8 rounded-2xl font-bold shadow-lg shadow-accent/20">
+                        Parcourir le catalogue
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ) : orders.map((order) => (
+                <Card key={order.id} className="overflow-hidden border-none shadow-premium rounded-3xl bg-white/50 backdrop-blur-sm p-5 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest leading-none">COMMANDE #{order.order_number}</p>
+                      <p className="text-xs font-bold text-primary">{new Date(order.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</p>
+                    </div>
+                    <Badge className={cn("text-[10px] rounded-full px-2.5 py-0.5 border-none shadow-sm", statusColors[order.status])}>
+                      {statusLabels[order.status] || order.status}
+                    </Badge>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
+
+                  <div className="bg-secondary/20 rounded-2xl p-4 space-y-3">
                     {(order.items as any[])?.map((item: any, i: number) => (
-                      <div key={i} className="flex items-center justify-between text-sm">
-                        <span>{item.name || item.product_name} × {item.quantity}</span>
-                        <span className="font-medium">{formatCFA(item.price * item.quantity)}</span>
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground/80"><span className="font-bold text-primary">{item.quantity}x</span> {item.name || item.product_name}</span>
+                        <span className="font-bold text-primary">{formatCFA(item.price * item.quantity)}</span>
                       </div>
                     ))}
-                    <div className="flex items-center justify-between border-t pt-2 font-semibold">
-                      <span>Total</span><span>{formatCFA(order.total)}</span>
+                    <div className="pt-2 border-t border-muted/50 flex justify-between items-center">
+                      <span className="text-xs font-black uppercase tracking-widest text-[#142642]">Total Payé</span>
+                      <span className="text-lg font-black text-accent tracking-tighter">{formatCFA(order.total)}</span>
                     </div>
                   </div>
 
                   {/* Delivery proof */}
                   {order.shipping_proof_note && (
-                    <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-                      <p className="font-medium text-foreground">📦 Preuve d'expédition :</p>
-                      <p className="mt-1 text-muted-foreground">{order.shipping_proof_note}</p>
+                    <div className="rounded-2xl border border-accent/10 bg-accent/5 p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-accent">
+                        <Truck className="h-4 w-4" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Note d'expédition</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground italic leading-relaxed">"{order.shipping_proof_note}"</p>
                       {order.shipping_proof_image && (
-                        <img src={order.shipping_proof_image} alt="Preuve" className="mt-2 h-32 rounded-lg object-cover" />
+                        <div className="h-32 w-full rounded-xl overflow-hidden shadow-inner">
+                          <img src={order.shipping_proof_image} alt="Preuve" className="h-full w-full object-cover" />
+                        </div>
                       )}
                     </div>
                   )}
 
-                  {/* Timeline */}
-                  <div className="rounded-lg border bg-muted/30 p-4">
-                    <div className="flex items-center gap-6 text-sm">
-                      <div className={`flex items-center gap-1.5 ${["paid","preparing","shipped","delivered","completed"].includes(order.status) ? "text-success" : "text-muted-foreground"}`}>
-                        <CheckCircle className="h-4 w-4" /> Payé
-                      </div>
-                      <div className={`flex items-center gap-1.5 ${["preparing","shipped","delivered","completed"].includes(order.status) ? "text-success" : "text-muted-foreground"}`}>
-                        <Package className="h-4 w-4" /> Préparé
-                      </div>
-                      <div className={`flex items-center gap-1.5 ${["shipped","delivered","completed"].includes(order.status) ? "text-success" : "text-muted-foreground"}`}>
-                        <Truck className="h-4 w-4" /> Expédié
-                      </div>
-                      <div className={`flex items-center gap-1.5 ${["delivered","completed"].includes(order.status) ? "text-success" : "text-muted-foreground"}`}>
-                        <CheckCircle className="h-4 w-4" /> Reçu
-                      </div>
-                    </div>
+                  {/* Visual Status Path */}
+                  <div className="flex items-center justify-between px-1">
+                    {[
+                      { key: "paid", icon: CheckCircle, label: "Payé" },
+                      { key: "preparing", icon: Package, label: "Prêt" },
+                      { key: "shipped", icon: Truck, label: "Expédié" },
+                      { key: "delivered", icon: CheckCircle, label: "Reçu" }
+                    ].map((step, idx, arr) => {
+                      const isActive = ["paid","preparing","shipped","delivered","completed"].indexOf(order.status) >= ["paid","preparing","shipped","delivered"].indexOf(step.key);
+                      return (
+                        <div key={step.key} className="flex flex-col items-center gap-1.5 flex-1 relative">
+                          <div className={cn("h-8 w-8 rounded-full flex items-center justify-center z-10 transition-colors", 
+                            isActive ? "bg-success text-white shadow-lg shadow-success/20" : "bg-muted text-muted-foreground/40")}>
+                            <step.icon className="h-4 w-4" />
+                          </div>
+                          <span className={cn("text-[9px] font-black uppercase tracking-tighter", isActive ? "text-success" : "text-muted-foreground/40")}>
+                            {step.label}
+                          </span>
+                          {idx < arr.length - 1 && (
+                            <div className={cn("absolute top-4 left-[50%] w-full h-[2px] -z-0", 
+                              isActive ? "bg-success/30" : "bg-muted/30")}></div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2 pt-2">
                     {order.status === "shipped" && (
-                      <Button onClick={() => confirmReception(order.id)} className="bg-success text-success-foreground hover:bg-success/90">
+                      <Button onClick={() => confirmReception(order.id)} className="flex-1 bg-success hover:bg-success/90 text-white h-11 rounded-2xl font-bold shadow-lg shadow-success/20">
                         <CheckCircle className="mr-2 h-4 w-4" /> Confirmer la réception
                       </Button>
                     )}
                     {order.status === "delivered" && (
-                      <Button variant="outline" onClick={() => openReviewDialog(order.id, order.items as any[])}>
+                      <Button variant="outline" onClick={() => openReviewDialog(order.id, order.items as any[])} className="flex-1 border-primary/20 hover:bg-primary/5 h-11 rounded-2xl font-bold text-primary">
                         <Star className="mr-2 h-4 w-4" /> Laisser un avis
                       </Button>
                     )}
                     {!["completed", "pending"].includes(order.status) && (
-                      <Button variant="ghost" size="sm" onClick={() => openDisputeDialog(order.id)} className="text-muted-foreground hover:text-destructive">
-                        <AlertTriangle className="mr-1.5 h-3.5 w-3.5" /> Signaler un problème
+                      <Button variant="ghost" size="sm" onClick={() => openDisputeDialog(order.id)} className="h-11 rounded-2xl text-[10px] text-muted-foreground font-bold hover:text-destructive hover:bg-destructive/5 uppercase tracking-widest px-4">
+                        <AlertTriangle className="mr-2 h-3.5 w-3.5" /> Signaler
                       </Button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           {/* Wishlist */}
@@ -395,24 +421,29 @@ export default function Profil() {
                     </div>
 
                     {/* Programme Ambassadeur */}
-                    <div className="rounded-xl border-2 border-accent/20 bg-accent/5 p-5 relative overflow-hidden group">
-                      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-accent/10 blur-2xl group-hover:bg-accent/20 transition-all"></div>
-                      <h3 className="font-display text-lg font-bold flex items-center gap-2">
-                        🌟 Programme Ambassadeur
-                      </h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Partagez votre code et débloquez 30 jours de mode PRO gratuitement à chaque parrainage réussi !
-                      </p>
-                      <div className="mt-4 flex items-center gap-2">
-                        <div className="flex-1 rounded-lg border bg-background px-3 py-2 font-mono font-bold text-accent">
-                          {profile?.referral_code || "GENERATION..."}
+                    <div className="rounded-3xl border-none bg-gradient-to-br from-accent/20 to-accent/5 p-6 relative overflow-hidden group shadow-premium">
+                      <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-accent/20 blur-3xl group-hover:bg-accent/30 transition-all duration-700"></div>
+                      <div className="relative z-10">
+                        <h3 className="font-display text-xl font-black text-accent flex items-center gap-2">
+                          <Star className="h-5 w-5 fill-accent" /> Programme Ambassadeur
+                        </h3>
+                        <p className="mt-2 text-xs font-medium text-primary/70 leading-relaxed max-w-[280px]">
+                          Partagez votre code et débloquez <span className="font-bold text-accent">30 jours de mode PRO</span> gratuitement à chaque parrainage réussi !
+                        </p>
+                        <div className="mt-5 flex items-center gap-3">
+                          <div className="flex-1 rounded-2xl bg-white/60 backdrop-blur-sm px-4 py-3 font-mono font-black text-lg text-accent tracking-[0.2em] shadow-inner text-center">
+                            {profile?.referral_code || "GENERATION..."}
+                          </div>
+                          <Button 
+                            className="bg-accent hover:bg-accent/90 h-14 w-14 rounded-2xl shadow-lg shadow-accent/20 transition-transform active:scale-95" 
+                            onClick={() => {
+                              navigator.clipboard.writeText(profile?.referral_code || "");
+                              toast({ title: "Code copié ! 📋", description: "Partagez-le avec vos amis pour gagner vos récompenses." });
+                            }}
+                          >
+                            <User className="h-6 w-6 text-white" />
+                          </Button>
                         </div>
-                        <Button size="sm" className="bg-accent" onClick={() => {
-                          navigator.clipboard.writeText(profile?.referral_code || "");
-                          toast({ title: "Code copié !", description: "Partagez-le avec vos amis." });
-                        }}>
-                          Copier
-                        </Button>
                       </div>
                     </div>
 

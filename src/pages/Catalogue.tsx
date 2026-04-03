@@ -25,19 +25,25 @@ export default function Catalogue() {
   const [loading, setLoading] = useState(true);
 
   const fetchProducts = async () => {
-      const { data } = await supabase
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
         .from("products")
         .select("*")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
+      if (error) throw error;
+
       if (data && data.length > 0) {
         // Fetch seller profiles
         const sellerIds = [...new Set(data.map(p => p.seller_id))];
-        const { data: profiles } = await supabase
+        const { data: profiles, error: profError } = await supabase
           .from("profiles")
-          .select("user_id, display_name, shop_name, verification_status, subscription_type")
+          .select("user_id, display_name, shop_name, verification_status, subscription_type, shop_slug")
           .in("user_id", sellerIds);
+
+        if (profError) throw profError;
 
         const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
@@ -80,7 +86,13 @@ export default function Catalogue() {
         // Fallback to mock data if no products in DB yet
         setDbProducts(mockProducts);
       }
+    } catch (error: any) {
+      console.error("Error fetching products:", error);
+      // Fallback on error (e.g. missing column)
+      setDbProducts(mockProducts);
+    } finally {
       setLoading(false);
+    }
   };
 
   useEffect(() => { fetchProducts(); }, []);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Users, Package, AlertTriangle, Ban, CheckCircle, Eye, RefreshCw, MessageSquare } from "lucide-react";
+import { Shield, Users, Package, AlertTriangle, Ban, CheckCircle, Eye, RefreshCw, MessageSquare, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,20 +34,25 @@ export default function AdminPanel() {
   }, [user, isAdmin, authLoading]);
 
   const fetchAll = async () => {
-    setLoadingData(true);
-    const [sellersRes, prodsRes, txRes, ordRes, dispRes] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("transactions").select("*").order("created_at", { ascending: false }),
-      supabase.from("orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("disputes").select("*").order("created_at", { ascending: false }),
-    ]);
-    setSellers(sellersRes.data || []);
-    setProducts(prodsRes.data || []);
-    setTransactions(txRes.data || []);
-    setOrders(ordRes.data || []);
-    setDisputes(dispRes.data || []);
-    setLoadingData(false);
+    try {
+      setLoadingData(true);
+      const [sellersRes, prodsRes, txRes, ordRes, dispRes] = await Promise.all([
+        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase.from("products").select("*").order("created_at", { ascending: false }),
+        supabase.from("transactions").select("*").order("created_at", { ascending: false }),
+        supabase.from("orders").select("*").order("created_at", { ascending: false }),
+        supabase.from("disputes").select("*").order("created_at", { ascending: false }),
+      ]);
+      setSellers(sellersRes.data || []);
+      setProducts(prodsRes.data || []);
+      setTransactions(txRes.data || []);
+      setOrders(ordRes.data || []);
+      setDisputes(dispRes.data || []);
+    } catch (error) {
+      console.error("Error fetching admin data:", error);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   const toggleProduct = async (id: string, currentActive: boolean) => {
@@ -111,235 +116,220 @@ export default function AdminPanel() {
 
             {/* Sellers Tab */}
             <TabsContent value="sellers" className="mt-4">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nom / Boutique</TableHead>
-                        <TableHead>Quartier</TableHead>
-                        <TableHead>WhatsApp</TableHead>
-                        <TableHead>Inscrit le</TableHead>
-                        <TableHead>Badge</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sellers.filter(s => s.shop_name).map(s => (
-                        <TableRow key={s.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{s.shop_name}</p>
-                              <p className="text-xs text-muted-foreground">{s.display_name}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>{s.neighborhood || "—"}</TableCell>
-                          <TableCell className="font-mono text-sm">{s.whatsapp_number || "—"}</TableCell>
-                          <TableCell>{new Date(s.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                          <TableCell>
-                            <Select
-                              value={(s as any).verification_status || "none"}
-                              onValueChange={async (val) => {
-                                await supabase.from("profiles").update({ verification_status: val }).eq("id", s.id);
-                                toast({ title: "Vérification mise à jour" });
-                                fetchAll();
-                              }}
-                            >
-                              <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Aucun</SelectItem>
-                                <SelectItem value="verified">Vérifié</SelectItem>
-                                <SelectItem value="pro">PRO</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {sellers.filter(s => s.shop_name).length === 0 && (
-                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucun vendeur inscrit</TableCell></TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                {sellers.filter(s => s.shop_name).map(s => (
+                  <Card key={s.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            {s.shop_name?.[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm">{s.shop_name}</p>
+                            <p className="text-[10px] text-muted-foreground">{s.display_name}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] bg-secondary/30">{s.neighborhood || "—"}</Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-xs mb-4">
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground uppercase tracking-widest text-[9px]">WhatsApp</p>
+                          <p className="font-mono font-medium">{s.whatsapp_number || "—"}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground uppercase tracking-widest text-[9px]">Inscrit le</p>
+                          <p className="font-medium">{new Date(s.created_at).toLocaleDateString("fr-FR")}</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t flex flex-col gap-2">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Statut de vérification</p>
+                        <Select
+                          value={(s as any).verification_status || "none"}
+                          onValueChange={async (val) => {
+                            await supabase.from("profiles").update({ verification_status: val }).eq("id", s.id);
+                            toast({ title: "Vérification mise à jour" });
+                            fetchAll();
+                          }}
+                        >
+                          <SelectTrigger className="w-full h-10 rounded-xl bg-background/50"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Aucun</SelectItem>
+                            <SelectItem value="verified">Vérifié</SelectItem>
+                            <SelectItem value="pro">PRO</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {sellers.filter(s => s.shop_name).length === 0 && (
+                  <div className="text-center text-muted-foreground py-12">Aucun vendeur inscrit</div>
+                )}
+              </div>
             </TabsContent>
 
             {/* Products Tab */}
             <TabsContent value="products" className="mt-4">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Produit</TableHead>
-                        <TableHead>Prix</TableHead>
-                        <TableHead>Quartier</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {products.map(p => (
-                        <TableRow key={p.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <img src={p.images?.[0] || "/placeholder.svg"} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                              <span className="font-medium">{p.name}</span>
+              <div className="grid gap-4">
+                {products.map(p => (
+                  <Card key={p.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm">
+                    <CardContent className="p-3">
+                      <div className="flex gap-4">
+                        <div className="h-20 w-20 rounded-xl bg-muted overflow-hidden shrink-0">
+                          <img src={p.images?.[0] || "/placeholder.svg"} alt="" className="h-full w-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                          <div>
+                            <h4 className="font-bold text-sm truncate">{p.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-primary font-bold text-base">{formatCFA(p.price)}</span>
+                              <Badge variant="outline" className="text-[9px] py-0 h-4">{p.neighborhood}</Badge>
                             </div>
-                          </TableCell>
-                          <TableCell>{formatCFA(p.price)}</TableCell>
-                          <TableCell>{p.neighborhood}</TableCell>
-                          <TableCell>
-                            <Badge className={p.is_active ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Badge className={p.is_active ? "bg-success/10 text-success text-[9px] h-5" : "bg-destructive/10 text-destructive text-[9px] h-5"}>
                               {p.is_active ? "Actif" : "Désactivé"}
                             </Badge>
-                          </TableCell>
-                          <TableCell className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setDetailProduct(p)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => toggleProduct(p.id, p.is_active)}>
-                              <Ban className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button variant="secondary" size="icon" className="h-9 w-9 rounded-xl" onClick={() => setDetailProduct(p)}>
+                            <Eye className="h-4 w-4 text-primary" />
+                          </Button>
+                          <Button variant="secondary" size="icon" className="h-9 w-9 rounded-xl" onClick={() => toggleProduct(p.id, p.is_active)}>
+                            <Ban className={`h-4 w-4 ${p.is_active ? "text-destructive" : "text-success"}`} />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {products.length === 0 && (
+                  <div className="text-center text-muted-foreground py-12">Aucun produit</div>
+                )}
+              </div>
             </TabsContent>
 
             {/* Disputes Tab */}
             <TabsContent value="disputes" className="mt-4">
-              <Card>
-                <CardContent className="p-0">
-                  {disputes.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground"><MessageSquare className="mx-auto h-12 w-12 opacity-30" /><p className="mt-3">Aucun litige signalé</p></div>
-                  ) : (
-                    <Table>
-                      <TableHeader><TableRow>
-                        <TableHead>Date</TableHead><TableHead>Commande</TableHead><TableHead>Raison</TableHead><TableHead>Statut</TableHead><TableHead>Action</TableHead>
-                      </TableRow></TableHeader>
-                      <TableBody>
-                        {disputes.map(d => {
-                          const order = orders.find(o => o.id === d.order_id);
-                          return (
-                            <TableRow key={d.id}>
-                              <TableCell>{new Date(d.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                              <TableCell className="font-mono text-sm">{order?.order_number || d.order_id.slice(0, 8)}</TableCell>
-                              <TableCell className="max-w-[200px] truncate">{d.reason}</TableCell>
-                              <TableCell>
-                                <Badge className={d.status === "open" ? "bg-destructive/10 text-destructive" : d.status === "resolved" ? "bg-success/10 text-success" : ""}>
-                                  {d.status === "open" ? "Ouvert" : d.status === "resolved" ? "Résolu" : d.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {d.status === "open" && (
-                                  <Button size="sm" variant="outline" onClick={async () => {
-                                    await supabase.from("disputes").update({ status: "resolved" }).eq("id", d.id);
-                                    toast({ title: "Litige résolu" }); fetchAll();
-                                  }}>Résoudre</Button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                {disputes.length === 0 ? (
+                  <div className="py-12 text-center text-muted-foreground">
+                    <MessageSquare className="mx-auto h-12 w-12 opacity-30" />
+                    <p className="mt-3">Aucun litige signalé</p>
+                  </div>
+                ) : (
+                  disputes.map(d => {
+                    const order = orders.find(o => o.id === d.order_id);
+                    return (
+                      <Card key={d.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <Badge variant="outline" className="text-[10px] font-mono">{order?.order_number || d.order_id.slice(0, 8)}</Badge>
+                            <Badge className={d.status === "open" ? "bg-destructive/10 text-destructive text-[10px]" : "bg-success/10 text-success text-[10px]"}>
+                              {d.status === "open" ? "Ouvert" : "Résolu"}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-4 line-clamp-2">{d.reason}</p>
+                          <div className="flex items-center justify-between pt-3 border-t">
+                            <span className="text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString("fr-FR")}</span>
+                            {d.status === "open" && (
+                              <Button size="sm" variant="outline" className="h-8 rounded-lg px-4 text-[11px]" onClick={async () => {
+                                await supabase.from("disputes").update({ status: "resolved" }).eq("id", d.id);
+                                toast({ title: "Litige résolu" }); fetchAll();
+                              }}>Résoudre</Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
             </TabsContent>
 
             {/* Transactions Tab */}
             <TabsContent value="transactions" className="mt-4">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Montant</TableHead>
-                        <TableHead>Commission</TableHead>
-                        <TableHead>Part vendeur</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead>Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {transactions.map(t => (
-                        <TableRow key={t.id}>
-                          <TableCell>{new Date(t.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                          <TableCell>{formatCFA(t.amount_total)}</TableCell>
-                          <TableCell>{formatCFA(t.commission_fee)}</TableCell>
-                          <TableCell>{formatCFA(t.seller_payout)}</TableCell>
-                          <TableCell>
-                            <Badge className={
-                              t.status === "completed" ? "bg-success/10 text-success" :
-                              t.status === "escrow" ? "bg-warning/10 text-warning" :
-                              t.status === "refunded" ? "bg-destructive/10 text-destructive" : ""
-                            }>
-                              {t.status === "completed" ? "Complété" : t.status === "escrow" ? "Séquestre" : t.status === "refunded" ? "Remboursé" : t.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {t.status === "escrow" && (
-                              <div className="flex gap-1">
-                                <Button size="sm" variant="outline" className="text-success" onClick={() => updateTxStatus(t.id, "completed")}>
-                                  Libérer
-                                </Button>
-                                <Button size="sm" variant="outline" className="text-destructive" onClick={() => updateTxStatus(t.id, "refunded")}>
-                                  Rembourser
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {transactions.length === 0 && (
-                        <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune transaction</TableCell></TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                {transactions.map(t => (
+                  <Card key={t.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="space-y-1">
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Transaction</p>
+                          <p className="text-base font-bold text-primary">{formatCFA(t.amount_total)}</p>
+                        </div>
+                        <Badge className={
+                          t.status === "completed" ? "bg-success/10 text-success text-[10px]" :
+                          t.status === "escrow" ? "bg-warning/10 text-warning text-[10px]" : "text-[10px]"
+                        }>
+                          {t.status === "completed" ? "Complété" : t.status === "escrow" ? "Séquestre" : t.status}
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-[10px] mb-4 bg-secondary/20 p-3 rounded-xl">
+                        <div>
+                          <p className="text-muted-foreground">Commission</p>
+                          <p className="font-bold text-destructive">{formatCFA(t.commission_fee)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Part Vendeur</p>
+                          <p className="font-bold text-success">{formatCFA(t.seller_payout)}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString("fr-FR")}</span>
+                        {t.status === "escrow" && (
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="h-8 rounded-lg text-success text-[10px] px-3" onClick={() => updateTxStatus(t.id, "completed")}>Libérer</Button>
+                            <Button size="sm" variant="outline" className="h-8 rounded-lg text-destructive text-[10px] px-3" onClick={() => updateTxStatus(t.id, "refunded")}>Rembourser</Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {transactions.length === 0 && (
+                  <div className="text-center text-muted-foreground py-12">Aucune transaction</div>
+                )}
+              </div>
             </TabsContent>
 
             {/* Orders Tab */}
             <TabsContent value="orders" className="mt-4">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>N°</TableHead>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Livraison</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map(o => (
-                        <TableRow key={o.id}>
-                          <TableCell className="font-mono text-sm">{o.order_number}</TableCell>
-                          <TableCell>{o.buyer_name}</TableCell>
-                          <TableCell>{formatCFA(o.total)}</TableCell>
-                          <TableCell>{o.delivery_method === "delivery" ? "Livraison" : "Retrait"}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{o.status}</Badge>
-                          </TableCell>
-                          <TableCell>{new Date(o.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                        </TableRow>
-                      ))}
-                      {orders.length === 0 && (
-                        <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune commande</TableCell></TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                {orders.map(o => (
+                  <Card key={o.id} className="overflow-hidden border-none shadow-premium rounded-2xl bg-white/50 backdrop-blur-sm">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-mono text-muted-foreground uppercase">{o.order_number}</p>
+                          <h4 className="font-bold text-sm">{o.buyer_name}</h4>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] rounded-full">{o.status}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-t border-b border-dashed my-3">
+                        <span className="text-xs text-muted-foreground">Total Commande</span>
+                        <span className="text-sm font-bold text-accent">{formatCFA(o.total)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Truck className="h-3 w-3" />
+                          <span>{o.delivery_method === "delivery" ? "Livraison" : "Retrait"}</span>
+                        </div>
+                        <span>{new Date(o.created_at).toLocaleDateString("fr-FR")}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {orders.length === 0 && (
+                  <div className="text-center text-muted-foreground py-12">Aucune commande</div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </div>

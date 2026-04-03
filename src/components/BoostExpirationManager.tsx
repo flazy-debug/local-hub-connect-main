@@ -9,7 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export default function BoostExpirationManager() {
   useEffect(() => {
+    let isSilenced = false;
+
     const cleanupExpiredBoosts = async () => {
+      if (isSilenced) return;
+
       const now = new Date().toISOString();
       
       const { error, count } = await (supabase
@@ -17,10 +21,16 @@ export default function BoostExpirationManager() {
         .update({ is_boosted: false, boost_expiry: null } as any)
         .lt("boost_expiry" as any, now)
         .eq("is_boosted" as any, true)
-        .select("id"); // select id to get the count of updated rows
+        .select("id");
 
       if (error) {
-        console.error("Error cleaning up expired boosts:", error);
+        // PGRST204 = Column not found
+        if (error.code === "PGRST204") {
+          console.warn("Boost system skipped: boost_expiry column missing from database.");
+          isSilenced = true;
+        } else {
+          console.error("Error cleaning up expired boosts:", error);
+        }
       } else if (count && count > 0) {
         console.log(`Cleaned up ${count} expired boosts.`);
       }
