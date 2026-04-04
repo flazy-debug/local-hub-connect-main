@@ -35,7 +35,7 @@ const statusColors:Record<string, string> = {
 };
 
 export default function Profil() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -413,9 +413,23 @@ export default function Profil() {
                       <div><p className="font-medium">{profile?.display_name || "—"}</p><p className="text-sm text-muted-foreground">{user?.email}</p></div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" /><span>{profile?.phone || "Non renseigné"}</span></div>
-                      <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-muted-foreground" /><span>{profile?.neighborhood || "Non renseigné"}</span></div>
+                       <div className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" /><span>{profile?.phone || "Non renseigné"}</span></div>
+                       <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-muted-foreground" /><span>{profile?.neighborhood || "Non renseigné"}</span></div>
                     </div>
+
+                    {isAdmin && (
+                      <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-accent">Accès Administrateur</p>
+                          <p className="text-[10px] text-muted-foreground">Gérez les boutiques, produits et litiges.</p>
+                        </div>
+                        <Link to="/admin-portal">
+                          <Button size="sm" className="bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold px-4">
+                             Accéder au Portail
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
                     <div className="rounded-lg border bg-muted/30 p-4">
                       <p className="text-sm font-medium">Statistiques</p>
                       <div className="mt-2 grid grid-cols-2 gap-4 text-center">

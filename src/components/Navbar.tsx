@@ -84,6 +84,11 @@ export default function Navbar() {
                   <DropdownMenuItem asChild className="rounded-2xl py-3 px-4 focus:bg-primary/5 cursor-pointer">
                     <Link to="/suivi" className="flex items-center gap-4 font-bold text-slate-600"><CreditCard className="h-4.5 w-4.5" /> Commandes</Link>
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild className="rounded-2xl py-3 px-4 focus:bg-accent/5 cursor-pointer">
+                      <Link to="/admin-portal" className="flex items-center gap-4 font-bold text-accent"><Shield className="h-4.5 w-4.5" /> Administration</Link>
+                    </DropdownMenuItem>
+                  )}
                   {isSeller && (
                     <DropdownMenuItem asChild className="rounded-2xl py-3 px-4 bg-primary/5 text-primary focus:bg-primary/10 cursor-pointer">
                       <Link to="/dashboard" className="flex items-center gap-4 font-black"><LayoutDashboard className="h-4.5 w-4.5" /> Dashboard Business</Link>

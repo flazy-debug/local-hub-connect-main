@@ -4,10 +4,11 @@ import { useEffect } from "react";
 import { SellerDashboard } from "@/components/dashboard/SellerDashboard";
 import { BuyerDashboard } from "@/components/dashboard/BuyerDashboard";
 import { PartnerDashboard } from "@/components/dashboard/PartnerDashboard";
+import AdminPortal from "./AdminPortal";
 import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundary";
 
 export default function Dashboard() {
-  const { user, profile, isSeller, loading } = useAuth();
+  const { user, profile, isSeller, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,7 +37,9 @@ export default function Dashboard() {
     <DashboardErrorBoundary>
       <div className="min-h-screen bg-[#F9FAFB] pb-24 pt-4 md:py-8">
         <div className="container px-4">
-          {isPartner ? (
+          {isAdmin ? (
+            <AdminPortal />
+          ) : isPartner ? (
             <PartnerDashboard />
           ) : isSeller ? (
             <SellerDashboard />
