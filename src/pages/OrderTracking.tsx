@@ -136,9 +136,9 @@ export default function OrderTracking() {
             <div className="rounded-xl border bg-card p-12 text-center">
               <Package className="mx-auto h-12 w-12 text-muted-foreground/30" />
               <p className="mt-3 text-lg font-medium text-muted-foreground">Aucune commande</p>
-              <Link to="/catalogue">
-                <Button className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">
-                  Découvrir le catalogue
+              <Link to="/tous-les-produits">
+                <Button className="mt-4 bg-primary text-white hover:bg-primary/90">
+                  Découvrir nos produits
                 </Button>
               </Link>
             </div>

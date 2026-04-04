@@ -261,7 +261,7 @@ export default function Auth() {
                       <Label htmlFor="signup-shop-name">Nom de la Boutique</Label>
                       <div className="relative">
                         <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input id="signup-shop-name" placeholder="Ex: Boutique Luxe Lomé" className="pl-9" value={shopName} onChange={e => setShopName(e.target.value)} required />
+                        <Input id="signup-shop-name" placeholder="Ex: Boutique Ma Boutique" className="pl-9" value={shopName} onChange={e => setShopName(e.target.value)} required />
                       </div>
                     </div>
                   )}
@@ -270,7 +270,7 @@ export default function Auth() {
                     <Label htmlFor="signup-neighborhood">Quartier / Ville</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="signup-neighborhood" placeholder="Ex: Adidogomé, Lomé" className="pl-9" value={locationNeighborhood} onChange={e => setLocationNeighborhood(e.target.value)} required />
+                      <Input id="signup-neighborhood" placeholder="Ex: Votre Quartier, Votre Ville" className="pl-9" value={locationNeighborhood} onChange={e => setLocationNeighborhood(e.target.value)} required />
                     </div>
                   </div>
                   <div className="space-y-2">

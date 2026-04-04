@@ -34,7 +34,7 @@ export default function Dashboard() {
 
   return (
     <DashboardErrorBoundary>
-      <div className="min-h-screen bg-secondary/30 pb-24 pt-4 md:py-8">
+      <div className="min-h-screen bg-[#F9FAFB] pb-24 pt-4 md:py-8">
         <div className="container px-4">
           {isPartner ? (
             <PartnerDashboard />

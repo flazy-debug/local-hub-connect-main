@@ -30,6 +30,10 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">("pickup");
   const [deliveryZone, setDeliveryZone] = useState("Zone A");
+  
+  // V1.1 Listing logic
+  const isListingCategory = ["immobilier", "vehicules", "emploi-services", "auto", "location-voiture"].includes(product?.category || "");
+  const isDirectCheckout = !isListingCategory;
 
   // Order form
   const [showOrderForm, setShowOrderForm] = useState(false);
@@ -97,15 +101,21 @@ export default function ProductDetail() {
         if (mockProd) { setProduct(mockProd); setDeliveryMethod(mockProd.pickupAvailable ? "pickup" : "delivery"); }
       }
       setLoading(false);
+      
+      // Special Redirection for Voiket (Car Rental)
+      if (dbProduct && dbProduct.category === "location-voiture") {
+        window.open("https://voiket.com", "_blank");
+        navigate("/tous-les-produits");
+      }
     };
     fetchProduct();
-  }, [id]);
+  }, [id, navigate]);
 
   if (loading) return <div className="container py-20 text-center"><p className="text-muted-foreground">Chargement...</p></div>;
   if (!product) return (
     <div className="container py-20 text-center">
       <p className="text-lg text-muted-foreground">Produit introuvable</p>
-      <Link to="/catalogue" className="mt-4 inline-block text-accent hover:underline">Retour au catalogue</Link>
+      <Link to="/tous-les-produits" className="mt-4 inline-block text-primary hover:underline">Retour aux produits</Link>
     </div>
   );
 
@@ -188,8 +198,8 @@ export default function ProductDetail() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: product?.name || "VOIKET",
-          text: `Découvrez ${product?.name} sur VOIKET !`,
+          title: product?.name || "Epuremarket",
+          text: `Découvrez ${product?.name} sur Epuremarket !`,
           url: window.location.href,
         });
       } catch (err) { console.log("Error sharing", err); }
@@ -200,277 +210,303 @@ export default function ProductDetail() {
   };
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="container">
-        <Link to="/catalogue" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Retour au catalogue
+    <div className="min-h-screen bg-background pb-32">
+      <div className="container pt-8 text-slate-900">
+        <Link to="/tous-les-produits" className="mb-10 inline-flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors group">
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Retour à la collection
         </Link>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* Images */}
-          <div>
-            <div className="aspect-square overflow-hidden rounded-xl border bg-secondary">
-              <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
+        <div className="grid gap-16 lg:grid-cols-12">
+          {/* Images Section - Asymmetric Layout */}
+          <div className="lg:col-span-7 space-y-8">
+            <div className="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-[2.5rem] bg-white shadow-[0_32px_64px_rgba(20,27,43,0.06)] group">
+               {product.isBoosted && (
+                 <div className="absolute top-6 left-6 z-20 bg-primary px-5 py-2 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">
+                   ★ Sélection Elite
+                 </div>
+               )}
+               <div className="absolute top-6 right-6 z-20 scale-125">
+                 <WishlistButton productId={product.id} />
+               </div>
+               <img 
+                 src={product.images[0]} 
+                 alt={product.name} 
+                 className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+               />
             </div>
-            {product.images.length > 1 && (
-              <div className="mt-3 flex gap-2 overflow-x-auto">
-                {product.images.map((img, i) => (
-                  <div key={i} className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border bg-secondary">
-                    <img src={img} alt="" className="h-full w-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
+
+            {/* Thumbnail Gallery & Video */}
+            <div className="grid grid-cols-4 gap-4">
+              {product.images.slice(0, 4).map((img, i) => (
+                <div key={i} className="aspect-square overflow-hidden rounded-3xl cursor-pointer hover:ring-2 ring-primary ring-offset-4 transition-all bg-white shadow-sm">
+                  <img src={img} alt="" className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
             
-            {/* Video Support */}
+            {/* Video Support - Editorial Integration */}
             {(product as any).videoUrl && (
-              <div className="mt-4 overflow-hidden rounded-xl border bg-secondary">
+              <div className="overflow-hidden rounded-[2rem] bg-white shadow-lg relative group">
                 <video 
                   src={(product as any).videoUrl} 
                   controls 
                   className="aspect-video w-full object-cover"
                   poster={product.images[0]}
                 />
-                <div className="bg-accent/10 p-2 text-center text-[10px] font-bold text-accent uppercase tracking-wider">
-                  🎬 Démonstration Vidéo
+                <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white text-[9px] font-black uppercase tracking-widest">
+                  🎥 Vidéo Produit
                 </div>
               </div>
             )}
           </div>
 
-          {/* Info */}
-          <div>
-            <div className="flex items-center gap-2">
-              <Badge variant={product.condition === "neuf" ? "default" : "secondary"} className={product.condition === "neuf" ? "bg-success text-success-foreground" : ""}>
-                {product.condition === "neuf" ? "Neuf" : "Occasion"}
-              </Badge>
-              <Badge variant="outline">{product.sellerType === "boutique" ? "Boutique" : "Particulier"}</Badge>
-              {product.isBoosted && (
-                <Badge className="bg-accent animate-pulse">🔥 Sponsorisé</Badge>
+          {/* Info Section - Editorial Panel */}
+          <div className="lg:col-span-5 space-y-10">
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge variant="outline" className="rounded-full border-primary/20 text-primary text-[9px] font-black uppercase tracking-widest px-4 py-1.5">
+                  {product.category}
+                </Badge>
+                <Badge className="bg-slate-900 text-white border-none text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+                  {product.condition === "neuf" ? "Pièce Neuve" : "Excellente Occasion"}
+                </Badge>
+              </div>
+
+              <div className="space-y-4">
+                <h1 className="font-display text-4xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">{product.name}</h1>
+                <div className="flex items-center gap-6">
+                   <div className="flex items-center gap-1.5 bg-primary/5 px-3 py-1.5 rounded-full">
+                     <Star className="h-4 w-4 fill-primary text-primary" />
+                     <span className="font-black text-primary text-sm">{avgRating}</span>
+                   </div>
+                   <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{reviews.length || product.reviewCount} avis certifiés</span>
+                   <span className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><MapPin className="h-4 w-4 text-primary/40" /> {product.neighborhood}</span>
+                </div>
+              </div>
+
+              {product.promoPrice ? (
+                <div className="flex items-end gap-6">
+                  <p className="font-display text-6xl font-black text-primary tracking-tighter leading-none">{formatCFA(product.promoPrice)}</p>
+                  <p className="text-2xl text-slate-300 font-bold line-through mb-1">{formatCFA(product.price)}</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p className="font-display text-6xl font-black text-primary tracking-tighter leading-none">
+                    {formatCFA(calculatedPrice)}
+                  </p>
+                  {isPartner && <p className="text-[10px] font-black text-primary/40 uppercase tracking-widest">Tarif Partenaire Privilégié</p>}
+                </div>
+              )}
+
+              <p className="text-slate-500 font-medium leading-relaxed text-lg pt-4 border-t border-slate-50">{product.description}</p>
+            </div>
+
+            {/* V1.1 Specifications - Clean UI */}
+            {isListingCategory && (
+              <div className="grid grid-cols-2 gap-6 pb-4">
+                <div className="p-6 rounded-[2rem] bg-white shadow-sm space-y-2 group hover:bg-primary transition-colors duration-500">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white/60">Emplacement</span>
+                  <p className="text-lg font-black text-slate-900 group-hover:text-white">{product.neighborhood}</p>
+                </div>
+                <div className="p-6 rounded-[2rem] bg-white shadow-sm space-y-2 group hover:bg-primary transition-colors duration-500">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white/60">Rubrique</span>
+                  <p className="text-lg font-black text-slate-900 uppercase group-hover:text-white">{product.category}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Order Interface */}
+            {isDirectCheckout && !showOrderForm && (
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Options de Récupération</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    {product.pickupAvailable && (
+                      <button onClick={() => setDeliveryMethod("pickup")}
+                        className={`flex flex-col items-start gap-3 rounded-[2rem] p-6 text-left transition-all duration-500 ${deliveryMethod === "pickup" ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-white text-slate-500 shadow-sm hover:shadow-md"}`}>
+                        <ShoppingBag className={`h-6 w-6 ${deliveryMethod === "pickup" ? "text-white" : "text-primary"}`} />
+                        <div>
+                          <p className="font-black text-sm uppercase tracking-tight">Retrait Boutique</p>
+                          {product.pickupAddress && <p className="text-[10px] font-bold opacity-60 mt-1 uppercase tracking-widest">{product.pickupAddress}</p>}
+                        </div>
+                      </button>
+                    )}
+                    {product.deliveryAvailable && (
+                      <button onClick={() => setDeliveryMethod("delivery")}
+                        className={`flex flex-col items-start gap-3 rounded-[2rem] p-6 text-left transition-all duration-500 ${deliveryMethod === "delivery" ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-white text-slate-500 shadow-sm hover:shadow-md"}`}>
+                        <Truck className={`h-6 w-6 ${deliveryMethod === "delivery" ? "text-white" : "text-primary"}`} />
+                        <div>
+                          <p className="font-black text-sm uppercase tracking-tight">Livraison Rapide</p>
+                          <p className="text-[10px] font-bold opacity-60 mt-1 uppercase tracking-widest">Lomé & Périphérie</p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-8 border-t border-slate-50">
+              {/* Interaction Logic */}
+              {(isExemptFromCommission || isListingCategory) ? (
+                /* PRO / Listing Logic */
+                <div className="space-y-6">
+                  {sellerWhatsapp ? (
+                    <a
+                      href={generateWhatsAppLink(sellerWhatsapp, {
+                        id: "nouveau", items: [{ name: product.name, quantity: 1, price: displayPrice }],
+                        total: displayPrice, deliveryMethod, neighborhood: product.neighborhood,
+                        buyerName: profile?.display_name || "", buyerPhone: profile?.phone || "",
+                      })}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center gap-4 rounded-full bg-[#25D366] hover:bg-[#20bd5a] px-10 py-6 font-black text-white text-xl shadow-[0_20px_40px_rgba(37,211,102,0.2)] transition-all active:scale-95"
+                    >
+                      <MessageCircle className="h-7 w-7" /> Commander par WhatsApp
+                    </a>
+                  ) : (
+                    <Button size="lg" disabled className="w-full rounded-full h-20 font-black text-xl opacity-50">Vendeur Indisponible</Button>
+                  )}
+                  <div className="flex gap-4">
+                    <Button variant="outline" onClick={handleShare} className="flex-1 h-16 rounded-full border-2 border-slate-100 font-black text-xs uppercase tracking-widest gap-3 hover:bg-slate-50">
+                      <Share2 className="h-5 w-5" /> Partager l'offre
+                    </Button>
+                  </div>
+                </div>
+              ) : !showOrderForm ? (
+                /* Direct Purchase Logic */
+                <div className="space-y-6">
+                  <Button size="lg" className="w-full h-20 bg-primary hover:bg-primary-dark rounded-full font-black text-xl shadow-[0_20px_40px_rgba(109,40,217,0.2)] transition-all" onClick={() => setShowOrderForm(true)}>
+                    Finaliser la Commande
+                  </Button>
+                  <Button variant="outline" onClick={handleShare} className="w-full h-16 rounded-full border-2 border-slate-100 font-black text-xs uppercase tracking-widest gap-3 hover:bg-slate-50">
+                    <Share2 className="h-5 w-5" /> Partager l'offre
+                  </Button>
+                </div>
+              ) : (
+                /* Order Form - Quality Luxury UI */
+                <Card className="border-none bg-white shadow-3xl rounded-[3rem] p-10 space-y-8 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8">
+                     <Package className="h-20 w-20 text-primary/5 rotate-12" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-display text-3xl font-black text-slate-900 tracking-tight">Vos Détails</h3>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Informations de livraison</p>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nom & Prénom</Label>
+                      <Input placeholder="Votre identité" value={buyerName} onChange={e => setBuyerName(e.target.value)} className="h-16 rounded-2xl border-none bg-slate-50 px-6 font-bold text-lg focus-visible:ring-primary" />
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Numéro WhatsApp</Label>
+                      <Input type="tel" placeholder="+228" value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} className="h-16 rounded-2xl border-none bg-slate-50 px-6 font-bold text-lg focus-visible:ring-primary" />
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quartier de livraison</Label>
+                      <Select value={buyerNeighborhood} onValueChange={setBuyerNeighborhood}>
+                        <SelectTrigger className="h-16 rounded-2xl border-none bg-slate-50 px-6 font-bold text-lg">
+                          <SelectValue placeholder="Sélectionner" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-3xl border-none shadow-2xl p-4">
+                          {neighborhoods.map(n => <SelectItem key={n} value={n} className="rounded-xl py-4 font-bold">{n}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="p-8 rounded-[2rem] bg-primary/2 space-y-6 border border-primary/5">
+                    <div className="flex justify-between items-center group">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prix Total</span>
+                      <span className="text-3xl font-black text-primary font-display tracking-tighter leading-none">{formatCFA(displayPrice + (deliveryMethod === "delivery" ? ({"Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500}[deliveryZone] || 0) : 0))}</span>
+                    </div>
+                    <Button onClick={handleOrder} disabled={isProcessing} className="w-full h-16 bg-primary hover:bg-primary-dark rounded-full font-black text-lg transition-all shadow-xl shadow-primary/20">
+                      {isProcessing ? "Finalisation..." : "Valider l'achat"}
+                    </Button>
+                    <button onClick={() => setShowOrderForm(false)} className="w-full text-center text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-primary transition-colors">
+                      Modifier la commande
+                    </button>
+                  </div>
+                </Card>
               )}
             </div>
 
-            <h1 className="mt-3 font-display text-2xl font-bold md:text-3xl">{product.name}</h1>
-
-            <div className="mt-2 flex items-center gap-3">
-              <div className="flex items-center gap-1"><Star className="h-4 w-4 fill-accent text-accent" /><span className="font-medium">{avgRating}</span></div>
-              <span className="text-sm text-muted-foreground">({reviews.length || product.reviewCount} avis)</span>
-              <span className="flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="h-3 w-3" /> {product.neighborhood}</span>
-            </div>
-
-            {product.promoPrice ? (
-              <div className="mt-4 flex items-center gap-3">
-                <p className="font-display text-3xl font-black text-accent tracking-tighter">{formatCFA(product.promoPrice)}</p>
-                <p className="text-lg text-muted-foreground line-through opacity-50">{formatCFA(product.price)}</p>
-                <Badge className="bg-destructive/10 text-destructive border-none font-bold">-{Math.round((1 - product.promoPrice / product.price) * 100)}%</Badge>
-              </div>
-            ) : (
-              <p className="mt-4 font-display text-4xl font-black text-accent tracking-tighter">
-                {formatCFA(calculatedPrice)}
-                {isPartner && <span className="ml-2 text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">(Prix Partenaire)</span>}
-              </p>
-            )}
-
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
-
-            {/* Delivery Options */}
-            <div className="mt-6 space-y-2">
-              <p className="text-sm font-semibold">Mode de récupération :</p>
-              <div className="flex gap-2">
-                {product.pickupAvailable && (
-                  <button onClick={() => setDeliveryMethod("pickup")}
-                    className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm transition-all ${deliveryMethod === "pickup" ? "border-accent bg-accent/10 text-accent" : "bg-card text-muted-foreground hover:bg-secondary"}`}>
-                    <ShoppingBag className="h-4 w-4" />
-                    <div className="text-left">
-                      <p className="font-medium">Retrait en boutique</p>
-                      {product.pickupAddress && <p className="text-xs opacity-70">{product.pickupAddress}</p>}
-                    </div>
-                  </button>
-                )}
-                {product.deliveryAvailable && (
-                  <button onClick={() => setDeliveryMethod("delivery")}
-                    className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm transition-all ${deliveryMethod === "delivery" ? "border-accent bg-accent/10 text-accent" : "bg-card text-muted-foreground hover:bg-secondary"}`}>
-                    <Truck className="h-4 w-4" />
-                    <div className="text-left">
-                      <p className="font-medium">Livraison à domicile</p>
-                      <p className="text-xs opacity-70">Frais selon quartier</p>
-                    </div>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Order CTA - PRO: WhatsApp, Commission: Direct order */}
-            {isExemptFromCommission ? (
-              /* PRO/Partner sellers: WhatsApp order */
-              <div className="mt-6">
-                {sellerWhatsapp ? (
-                  <a
-                    href={generateWhatsAppLink(sellerWhatsapp, {
-                      id: "nouveau", items: [{ name: product.name, quantity: 1, price: displayPrice }],
-                      total: displayPrice, deliveryMethod, neighborhood: product.neighborhood,
-                      buyerName: profile?.display_name || "", buyerPhone: profile?.phone || "",
-                    })}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-3 rounded-2xl bg-success hover:bg-success/90 px-6 py-4 font-black text-white text-lg shadow-xl shadow-success/20 transition-all active:scale-95"
-                  >
-                    <MessageCircle className="h-6 w-6" /> Commander par WhatsApp
-                  </a>
-                ) : (
-                  <Button size="lg" disabled className="w-full rounded-2xl h-14 font-black">Vendeur non joignable</Button>
-                )}
-                <div className="mt-4 flex justify-center gap-4">
-                  <WishlistButton productId={product.id} size="md" />
-                  <Button variant="outline" size="icon" onClick={handleShare} className="h-12 w-12 rounded-xl border-primary/10">
-                    <Share2 className="h-5 w-5" />
-                  </Button>
+            {/* Seller Identity - Editorial Style */}
+            <div className="p-8 rounded-[2.5rem] bg-white shadow-sm border border-slate-50 flex items-center justify-between group">
+              <div className="flex items-center gap-6">
+                <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-[-4deg] group-hover:rotate-0 transition-transform">
+                  <Store className="h-8 w-8 text-white" />
                 </div>
-                {isPartner && (
-                  <div className="mt-3 p-3 rounded-xl bg-accent/5 border border-accent/10 flex items-start gap-2">
-                    <div className="h-5 w-5 rounded-full bg-accent/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <ShieldCheck className="h-3 w-3 text-accent" />
-                    </div>
-                    <p className="text-[10px] text-accent/80 leading-tight">
-                      <span className="font-bold">PRIX DIRECT :</span> En tant que Partenaire Officiel, le vendeur vous propose des prix grossistes avec une marge réduite et sans commission plateforme.
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : !showOrderForm ? (
-              <div className="mt-6 flex gap-3">
-                <Button size="lg" className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setShowOrderForm(true)}>
-                  Commander maintenant
-                </Button>
-                <div className="flex h-12 w-12 items-center justify-center">
-                  <WishlistButton productId={product.id} size="md" />
-                </div>
-              </div>
-            ) : (
-              /* Inline Order Form - Commission sellers only */
-              <Card className="mt-6 space-y-6 border-none bg-white/50 backdrop-blur-sm p-6 shadow-premium rounded-3xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-accent"></div>
-                <h3 className="font-display text-xl font-black text-[#142642]">Finaliser ma commande</h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Nom complet</Label>
-                    <Input placeholder="Votre nom" value={buyerName} onChange={e => setBuyerName(e.target.value)} className="h-12 rounded-2xl border-muted/20 bg-white/50" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Téléphone WhatsApp</Label>
-                    <Input type="tel" inputMode="tel" placeholder="+228..." value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} className="h-12 rounded-2xl border-muted/20 bg-white/50" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Quartier</Label>
-                    <Select value={buyerNeighborhood} onValueChange={setBuyerNeighborhood}>
-                      <SelectTrigger className="h-12 rounded-2xl border-muted/20 bg-white/50">
-                        <SelectValue placeholder="Choisir" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-none shadow-premium">
-                        {neighborhoods.map(n => <SelectItem key={n} value={n} className="rounded-xl my-0.5">{n}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-secondary/20 p-4 space-y-3 shadow-inner">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground font-medium uppercase tracking-tight">Prix Unitaire</span>
-                    <span className="font-bold">{formatCFA(displayPrice)}</span>
-                  </div>
-                  {deliveryMethod === "delivery" && (
-                    <div className="space-y-3 pt-3 border-t border-muted/20">
-                       <div className="flex justify-between items-center">
-                         <Label className="text-[10px] uppercase font-black text-primary tracking-widest">Zone Lomé</Label>
-                         <Select value={deliveryZone} onValueChange={setDeliveryZone}>
-                           <SelectTrigger className="h-8 w-40 text-[10px] font-bold rounded-full bg-white/50 border-none shadow-sm">
-                             <SelectValue placeholder="Zone" />
-                           </SelectTrigger>
-                           <SelectContent className="rounded-2xl border-none shadow-premium">
-                             <SelectItem value="Zone A" className="rounded-xl">Zone A (Centre - 500F)</SelectItem>
-                             <SelectItem value="Zone B" className="rounded-xl">Zone B (Adido - 1000F)</SelectItem>
-                             <SelectItem value="Zone C" className="rounded-xl">Zone C (Bagui - 1500F)</SelectItem>
-                             <SelectItem value="Zone D" className="rounded-xl">Zone D (Agoé - 2000F)</SelectItem>
-                             <SelectItem value="Zone E" className="rounded-xl">Zone E (Davié - 2500F)</SelectItem>
-                           </SelectContent>
-                         </Select>
-                       </div>
-                       <div className="flex justify-between text-[10px] font-black italic text-success uppercase tracking-tighter">
-                         <span className="flex items-center gap-1"><Truck className="h-3 w-3" /> Frais de zone</span>
-                         <span>+{formatCFA(deliveryMethod === "delivery" ? ({"Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500}[deliveryZone] || 0) : 0)}</span>
-                       </div>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-end border-t border-muted/20 pt-3">
-                    <span className="text-xs font-black uppercase tracking-widest text-[#142642]">Total Final</span>
-                    <span className="text-2xl font-black text-accent tracking-tighter leading-none">{formatCFA(displayPrice + (deliveryMethod === "delivery" ? ({"Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500}[deliveryZone] || 0) : 0))}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3 pt-2">
-                  <Button onClick={handleOrder} disabled={isProcessing} className="w-full bg-accent hover:bg-accent/90 text-white h-14 rounded-2xl font-bold text-lg shadow-xl shadow-accent/20 transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <CheckCircle className="h-5 w-5" /> {isProcessing ? "Traitement..." : "Confirmer ma commande"}
-                  </Button>
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1 rounded-2xl h-12 border-primary/10 hover:bg-primary/5 text-primary text-xs font-bold uppercase tracking-widest" onClick={() => setShowOrderForm(false)}>
-                      Annuler
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={handleShare} className="h-12 w-12 rounded-2xl border-primary/10 text-primary hover:bg-primary/5 shadow-sm">
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Seller Info */}
-            <div className="mt-6 rounded-xl border bg-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary"><Store className="h-5 w-5 text-primary-foreground" /></div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className="font-semibold">{product.sellerName}</p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-black text-slate-900 tracking-tight">{product.sellerName}</p>
                     <VerificationBadge status={product.sellerVerification} />
                   </div>
-                  <p className="text-xs text-muted-foreground">{product.sellerType === "boutique" ? "Boutique" : "Vendeur particulier"}</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{product.sellerType === "boutique" ? "Boutique Officielle" : "Particulier Certifié"}</p>
                 </div>
-                <div className="ml-auto"><FollowButton sellerId={product.sellerId} size="sm" /></div>
               </div>
-              {/* Only show WhatsApp contact for PRO sellers */}
-              {sellerSubscription === "PRO" && sellerWhatsapp && (
-                <a href={`https://wa.me/${sellerWhatsapp.replace("+", "")}`} target="_blank" rel="noopener noreferrer"
-                  className="mt-3 flex items-center gap-2 rounded-lg bg-success/10 px-4 py-2 text-sm font-medium text-success transition-colors hover:bg-success/20">
-                  <MessageCircle className="h-4 w-4" /> Contacter sur WhatsApp
-                </a>
-              )}
+              <FollowButton sellerId={product.sellerId} />
+            </div>
+
+            {/* Trust Badges - Soft Integration */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-4 p-4 rounded-3xl bg-slate-50/50">
+                <ShieldCheck className="h-6 w-6 text-primary/40" />
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Transaction <br/> Sécurisée</p>
+              </div>
+              <div className="flex items-center gap-4 p-4 rounded-3xl bg-slate-50/50">
+                <Package className="h-6 w-6 text-primary/40" />
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Vendeur <br/> Vérifié</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Reviews */}
-        <section className="mt-12">
-          <h2 className="font-display text-xl font-bold">Avis des acheteurs</h2>
+        {/* Reviews Section - Content First */}
+        <section className="mt-32 pt-32 border-t border-slate-50">
+          <div className="flex items-center justify-between mb-12">
+            <div className="space-y-2">
+              <h2 className="font-display text-4xl font-black text-slate-900 tracking-tight">Expériences Clients</h2>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Retours d'achat certifiés</p>
+            </div>
+            <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-sm">
+              <Star className="h-5 w-5 fill-primary text-primary" />
+              <span className="font-black text-primary text-xl leading-none font-display">{avgRating}</span>
+              <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">Score Global</span>
+            </div>
+          </div>
+
           {reviews.length > 0 ? (
-            <div className="mt-4 space-y-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
               {reviews.map((review) => (
-                <div key={review.id} className="rounded-xl border bg-card p-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
+                <div key={review.id} className="p-10 rounded-[3rem] bg-white shadow-sm hover:shadow-xl transition-all border border-slate-50 space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={`h-4 w-4 ${i < review.rating ? "fill-accent text-accent" : "text-muted"}`} />
+                        <Star key={i} className={`h-4 w-4 ${i < review.rating ? "fill-primary text-primary" : "text-slate-100"}`} />
                       ))}
                     </div>
-                    <span className="text-sm font-medium">{review.buyerName}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(review.createdAt).toLocaleDateString("fr-FR")}</span>
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{new Date(review.createdAt).toLocaleDateString("fr-FR")}</span>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{review.comment}</p>
+                  <p className="text-slate-500 font-medium text-lg italic leading-relaxed">"{review.comment}"</p>
+                  <div className="flex items-center gap-3 pt-6 border-t border-slate-50">
+                    <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-black text-xs">
+                      {review.buyerName.charAt(0)}
+                    </div>
+                    <span className="text-sm font-black text-slate-900 uppercase tracking-tighter">{review.buyerName}</span>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted-foreground">Aucun avis pour ce produit</p>
+            <div className="text-center py-24 rounded-[3rem] bg-slate-50/50 border-2 border-dashed border-slate-100">
+              <MessageCircle className="h-16 w-16 text-slate-200 mx-auto mb-6" />
+              <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Premier arrivé, premier à s'exprimer !</p>
+              <p className="text-slate-300 font-medium mt-1">Soyez le premier à donner votre avis sur cette pièce.</p>
+            </div>
           )}
         </section>
       </div>
     </div>
   );
 }
+

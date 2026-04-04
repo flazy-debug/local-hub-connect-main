@@ -78,7 +78,7 @@ const plans = [
     color: "text-rose-500",
     bgColor: "bg-rose-50",
     features: [
-      "Top du catalogue (3 jours)",
+      "Top des produits (3 jours)",
       "Badge 🔥 VENTE FLASH",
       "Cible 5x plus de clients",
       "Notifications push locales",

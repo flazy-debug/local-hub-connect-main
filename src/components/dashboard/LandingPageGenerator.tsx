@@ -61,13 +61,23 @@ export default function LandingPageGenerator({ products }: Props) {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="space-y-5 p-6">
-          <div className="flex items-center gap-2 text-lg font-semibold">
-            <Megaphone className="h-5 w-5 text-accent" />
-            Créer une page de destination marketing
+    <div className="space-y-8">
+      <Card className="border-none shadow-soft rounded-[2.5rem] bg-white overflow-hidden">
+        <div className="bg-gradient-to-br from-accent to-accent-hover p-8 text-white">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-2xl">
+              <Megaphone className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h2 className="font-display text-2xl font-black uppercase tracking-tighter leading-none mb-1">
+                Générateur de Campagne
+              </h2>
+              <p className="text-white/60 text-xs font-medium uppercase tracking-[0.2em]">Marketing Digital Elite</p>
+            </div>
           </div>
+        </div>
+        
+        <CardContent className="space-y-6 p-10 bg-[#f9f9ff]">
 
           <div className="space-y-2">
             <Label>Sélectionner un produit *</Label>
@@ -115,22 +125,43 @@ export default function LandingPageGenerator({ products }: Props) {
                 </div>
               </div>
 
-              {/* Preview */}
-              <div className="rounded-xl border-2 border-dashed border-accent/30 bg-accent/5 p-4">
-                <p className="mb-1 text-xs font-medium text-accent">Aperçu</p>
-                <h3 className="font-display text-lg font-bold">{headline || product.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                <div className="mt-2 flex items-center gap-3">
-                  {promoPrice && (
-                    <>
-                      <span className="text-lg font-bold text-accent">{formatCFA(Number(promoPrice))}</span>
-                      <span className="text-sm text-muted-foreground line-through">{formatCFA(product.price)}</span>
-                    </>
-                  )}
-                  {!promoPrice && <span className="text-lg font-bold">{formatCFA(product.price)}</span>}
-                </div>
-                <div className="mt-3">
-                  <Badge className="bg-accent text-accent-foreground">{cta || "Commander"}</Badge>
+              {/* Preview - Digital Curator Style */}
+              <div className="space-y-3 pt-4">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Aperçu de la Galerie</Label>
+                <div className="rounded-[2.5rem] border-none bg-white p-8 shadow-premium relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4">
+                    <Badge className="bg-accent/10 text-accent border-none font-bold text-[10px] uppercase tracking-widest px-3">
+                      Digital Banner
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row gap-8 items-center">
+                    <div className="h-24 w-24 rounded-2xl overflow-hidden shadow-soft group-hover:scale-105 transition-transform duration-500">
+                       <img src={product.images?.[0]} alt={product.name} className="h-full w-full object-cover" />
+                    </div>
+                    <div className="flex-1 space-y-2 text-center md:text-left">
+                      <h3 className="font-display text-2xl font-black text-primary uppercase tracking-tighter leading-none">
+                        {headline || product.name}
+                      </h3>
+                      <p className="text-sm text-slate-400 font-medium line-clamp-2 italic">
+                        {product.description}
+                      </p>
+                      
+                      <div className="flex items-center justify-center md:justify-start gap-4 pt-2">
+                        {promoPrice ? (
+                          <>
+                            <span className="text-2xl font-black text-accent">{formatCFA(Number(promoPrice))}</span>
+                            <span className="text-sm font-bold text-slate-300 line-through decoration-accent/30">{formatCFA(product.price)}</span>
+                          </>
+                        ) : (
+                          <span className="text-2xl font-black text-primary">{formatCFA(product.price)}</span>
+                        )}
+                        <Badge className="bg-primary text-white font-black text-[10px] uppercase tracking-widest px-4 py-1 rounded-full ml-auto md:ml-4">
+                          {cta || "Réserver"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 

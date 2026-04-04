@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
@@ -78,6 +80,7 @@ export default function AdminPortal() {
   const [disputeDialog, setDisputeDialog] = useState<any>(null);
   const [editingPartner, setEditingPartner] = useState<any>(null);
   const [markupValue, setMarkupValue] = useState("");
+  const [adminResponse, setAdminResponse] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
@@ -396,7 +399,7 @@ export default function AdminPortal() {
                               </Badge>
                             </div>
 
-                            <div className="bg-secondary/20 rounded-xl p-3 mb-2 space-y-2">
+                            <div className="bg-muted/10 rounded-xl p-3 mb-2 space-y-2">
                               <div className="flex justify-between text-[11px]">
                                 <span className="text-muted-foreground">Boutique</span>
                                 <span className="font-bold">{seller?.shop_name || "N/A"}</span>
@@ -440,7 +443,7 @@ export default function AdminPortal() {
                   <div className="grid gap-6">
                     {/* Active Partners */}
                     <Card className="border-none shadow-premium rounded-3xl overflow-hidden bg-white">
-                      <CardHeader className="bg-secondary/10 border-b">
+                      <CardHeader className="bg-muted/10 border-b">
                         <CardTitle className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
                            <Users className="h-4 w-4" /> Liste des Partenaires Sourcing
                         </CardTitle>
@@ -482,7 +485,7 @@ export default function AdminPortal() {
                       <CardContent>
                         <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                           {candidates.slice(0, 10).map(c => (
-                            <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-secondary/20 hover:border-accent/40 transition-colors">
+                            <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 hover:border-accent/40 transition-colors">
                               <div>
                                 <p className="text-sm font-bold">{c.display_name || c.shop_name}</p>
                                 <p className="text-[10px] text-muted-foreground">{c.whatsapp_number || "Pas de numéro"}</p>

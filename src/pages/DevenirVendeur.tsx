@@ -241,7 +241,7 @@ export default function DevenirVendeur() {
         </section>
 
         {/* Steps */}
-        <section className="bg-secondary/50 py-16">
+        <section className="bg-slate-50 py-16">
           <div className="container">
             <h2 className="text-center font-display text-3xl font-bold">Comment ça marche ?</h2>
             <div className="mt-10 grid gap-6 md:grid-cols-4">
@@ -299,7 +299,7 @@ export default function DevenirVendeur() {
                       <div className="space-y-3">
                         <Label>Choisir votre forfait</Label>
                         <RadioGroup value={plan} onValueChange={(v) => setPlan(v as any)} className="space-y-3">
-                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all ${plan === "commission" ? "border-accent bg-accent/5" : "hover:bg-secondary/50"}`}>
+                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all ${plan === "commission" ? "border-accent bg-accent/5" : "hover:bg-slate-50"}`}>
                             <RadioGroupItem value="commission" className="mt-1" />
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
@@ -309,7 +309,7 @@ export default function DevenirVendeur() {
                               <p className="mt-1 text-xs text-muted-foreground">0 CFA / mois — 10% de commission sur chaque vente</p>
                             </div>
                           </label>
-                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-all ${plan === "monthly_flat" ? "border-accent bg-accent/5" : "border-accent/30 hover:bg-secondary/50"}`}>
+                          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-all ${plan === "monthly_flat" ? "border-accent bg-accent/5" : "border-accent/30 hover:bg-slate-50"}`}>
                             <RadioGroupItem value="monthly_flat" className="mt-1" />
                             <div className="flex-1">
                               <div className="flex items-center gap-2">

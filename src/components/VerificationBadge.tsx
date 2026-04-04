@@ -12,17 +12,17 @@ export default function VerificationBadge({ status, size = "sm" }: VerificationB
 
   if (status === "pro") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-amber-500" title="Vendeur PRO">
+      <span className="inline-flex items-center gap-1 text-accent font-black tracking-widest" title="Vendeur PRO">
         <ShieldCheck className={iconSize} />
-        {size === "md" && <span className="text-xs font-semibold">PRO</span>}
+        {size === "md" && <span className="text-[10px] uppercase">Partenaire Elite</span>}
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-0.5 text-blue-500" title="Vendeur Vérifié">
+    <span className="inline-flex items-center gap-1 text-green-500 font-bold" title="Vendeur Vérifié">
       <CheckCircle className={iconSize} />
-      {size === "md" && <span className="text-xs font-semibold">Vérifié</span>}
+      {size === "md" && <span className="text-[10px] uppercase">Vérifié</span>}
     </span>
   );
 }

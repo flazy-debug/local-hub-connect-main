@@ -23,9 +23,9 @@ const statusLabels: Record<string, string> = {
   shipped: "Expédié", delivered: "Livré", completed: "Terminé",
 };
 const statusColors: Record<string, string> = {
-  pending: "bg-muted text-muted-foreground", paid: "bg-info/10 text-info",
-  preparing: "bg-warning/10 text-warning", shipped: "bg-accent/10 text-accent",
-  delivered: "bg-success/10 text-success", completed: "bg-success/10 text-success",
+  pending: "bg-slate-100 text-slate-600", paid: "bg-violet-100 text-violet-600",
+  preparing: "bg-amber-100 text-amber-600", shipped: "bg-accent/10 text-accent",
+  delivered: "bg-green-100 text-green-600", completed: "bg-green-100 text-green-600",
 };
 
 export function BuyerDashboard() {
@@ -102,26 +102,35 @@ export function BuyerDashboard() {
 
   return (
     <div className="space-y-8 pb-20">
-      {/* Premium Header */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#142642] to-[#1e3a5f] p-8 text-white shadow-2xl">
-        <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-accent/20 blur-[80px]"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="font-display text-3xl font-black md:text-4xl">
-              Hello, <span className="text-accent">{profile?.display_name || "Acheteur"}</span> 👋
+      {/* Premium Header - Digital Curator Style */}
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-accent to-accent-hover p-10 text-white shadow-2xl">
+        <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-white/10 blur-[80px]"></div>
+        <div className="absolute -left-12 -bottom-12 h-40 w-40 rounded-full bg-black/10 blur-[60px]"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-widest">
+              <ShieldCheck className="h-3 w-3" /> Espace Sécurisé Elite
+            </div>
+            <h1 className="font-display text-4xl font-black md:text-5xl uppercase tracking-tighter leading-none">
+              Mon <span className="opacity-70">Univers</span>
             </h1>
-            <p className="text-sm font-medium text-white/70 max-w-sm">
-              Votre espace personnel pour gérer vos achats, suivre vos commandes et découvrir vos coups de cœur.
+            <p className="text-sm font-medium text-white/80 max-w-sm leading-relaxed">
+              Gérez vos acquisitions, suivez vos colis et explorez vos sélections exclusives dans un environnement haute couture.
             </p>
           </div>
-          <div className="flex items-center gap-4">
-             <div className="rounded-2xl bg-white/10 backdrop-blur-md p-4 text-center border border-white/5 shadow-inner">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/80">Commandes</p>
-                <p className="text-2xl font-black">{orders.length}</p>
+          
+          <div className="flex items-center gap-5">
+             <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 text-center border border-white/10 shadow-2xl min-w-[120px]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Commandes</p>
+                <p className="text-3xl font-black text-white">{orders.length}</p>
              </div>
-             <div className="rounded-2xl bg-accent/20 backdrop-blur-md p-4 text-center border border-accent/20 shadow-lg shadow-accent/10">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Points Reward</p>
-                <p className="text-2xl font-black text-accent">1,250</p>
+             <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 text-center border border-white/10 shadow-2xl min-w-[120px]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Points</p>
+                <div className="flex items-center justify-center gap-1">
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                  <p className="text-3xl font-black text-white">1,250</p>
+                </div>
              </div>
           </div>
         </div>
@@ -132,54 +141,75 @@ export function BuyerDashboard() {
         {/* Left Column: Recent Orders & Wishlist */}
         <div className="lg:col-span-2 space-y-8">
           <section>
-            <div className="mb-4 flex items-center justify-between px-2">
-              <h2 className="font-display text-xl font-black text-primary flex items-center gap-2">
-                <Package className="h-5 w-5 text-accent" /> Commandes Récentes
+            <div className="mb-6 flex items-center justify-between px-2">
+              <h2 className="font-display text-2xl font-black text-primary flex items-center gap-3">
+                <Package className="h-6 w-6 text-accent" /> Acquisitions Récentes
               </h2>
-              <Link to="/profil?tab=orders" className="text-xs font-bold text-accent hover:underline flex items-center gap-1">
-                Tout voir <ArrowRight className="h-3 w-3" />
+              <Link to="/profil?tab=orders" className="group flex items-center gap-2 text-xs font-bold text-accent uppercase tracking-widest hover:opacity-70 transition-all">
+                Tout voir <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
             
-            <div className="grid gap-4">
-              {loadingOrders ? <div className="h-40 bg-muted/20 animate-pulse rounded-3xl" /> : 
+            <div className="grid gap-5">
+              {loadingOrders ? <div className="h-40 bg-slate-100/50 animate-pulse rounded-[2rem] shadow-sm" /> : 
                orders.length === 0 ? (
-                <Card className="border-dashed py-12 rounded-3xl bg-secondary/10">
-                  <CardContent className="text-center">
-                    <ShoppingBag className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
-                    <p className="font-bold text-primary">Aucune commande en cours</p>
-                    <Link to="/catalogue"><Button variant="link" className="text-accent underline">Explorer le catalogue</Button></Link>
+                <Card className="border-none py-16 rounded-[2.5rem] bg-slate-50/50 backdrop-blur-sm shadow-inner text-center">
+                  <CardContent>
+                    <div className="h-20 w-20 rounded-full bg-white shadow-xl mx-auto flex items-center justify-center mb-6">
+                      <ShoppingBag className="h-10 w-10 text-slate-200" />
+                    </div>
+                    <p className="font-display text-xl font-black text-primary uppercase mb-2">Aucune commande</p>
+                    <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Votre collection est vide. Découvrez nos pièces d'exception dès maintenant.</p>
+                    <Link to="/tous-les-produits">
+                      <Button className="bg-accent hover:bg-accent-hover text-white rounded-2xl px-8 font-bold text-xs uppercase tracking-widest shadow-lg shadow-accent/20">
+                        Explorer l'Atelier
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
                ) : orders.map(order => (
-                <Card key={order.id} className="border-none shadow-premium bg-white overflow-hidden rounded-3xl group transition-all hover:shadow-xl">
-                  <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-2xl bg-secondary/30 flex items-center justify-center text-primary font-black shadow-inner">
-                        <ShoppingBag className="h-6 w-6 opacity-50" />
+                <Card key={order.id} className="border-none shadow-soft overflow-hidden rounded-[2rem] bg-white group transition-all hover:shadow-premium hover:-translate-y-1">
+                  <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-5">
+                      <div className="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center text-primary font-black shadow-inner group-hover:scale-105 transition-transform">
+                        <ShoppingBag className="h-7 w-7 text-accent/30" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest">CMD #{order.order_number}</p>
-                        <h4 className="font-bold text-sm text-primary">
-                          {(order.items as any[])?.[0]?.name || "Produit"} { (order.items as any[])?.length > 1 && `+${(order.items as any[])?.length - 1} articles`}
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">CMD #{order.order_number}</p>
+                          <Badge className={cn("text-[8px] font-black uppercase tracking-widest px-2 h-4", statusColors[order.status])}>
+                            {statusLabels[order.status]}
+                          </Badge>
+                        </div>
+                        <h4 className="font-display font-bold text-primary text-lg">
+                          {(order.items as any[])?.[0]?.name || "Produit"} { (order.items as any[])?.length > 1 && <span className="text-accent/50 text-base">+{(order.items as any[])?.length - 1} articles</span>}
                         </h4>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Badge className={cn("text-[10px] font-black uppercase tracking-tighter px-3 h-6", statusColors[order.status])}>
-                        {statusLabels[order.status]}
-                      </Badge>
-                      <span className="font-black text-accent text-lg">{formatCFA(order.total)}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="secondary" size="icon" className="h-10 w-10 rounded-xl" onClick={() => navigate(`/suivi?id=${order.order_number}`)}>
-                        <ArrowRight className="h-5 w-5" />
-                      </Button>
-                      {order.status === "shipped" && (
-                        <Button onClick={() => confirmReception(order.id)} className="bg-success text-white h-10 rounded-xl px-4 font-bold text-xs">
-                          Reçu
+                    
+                    <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-none pt-4 md:pt-0">
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total</p>
+                        <p className="font-display font-black text-primary text-xl leading-none">{formatCFA(order.total)}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-12 w-12 rounded-2xl bg-slate-50 hover:bg-accent hover:text-white transition-all shadow-sm" 
+                          onClick={() => navigate(`/suivi?id=${order.order_number}`)}
+                        >
+                          <ArrowRight className="h-5 w-5" />
                         </Button>
-                      )}
+                        {order.status === "shipped" && (
+                          <Button 
+                            onClick={() => confirmReception(order.id)} 
+                            className="bg-green-500 hover:bg-green-600 text-white h-12 rounded-2xl px-6 font-bold text-xs uppercase tracking-widest shadow-lg shadow-green-200"
+                          >
+                            Reçu
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -188,28 +218,29 @@ export function BuyerDashboard() {
           </section>
 
           <section>
-            <div className="mb-4 flex items-center justify-between px-2">
-              <h2 className="font-display text-xl font-black text-primary flex items-center gap-2">
-                <Heart className="h-5 w-5 text-accent" /> Coups de Cœur
+            <div className="mb-6 flex items-center justify-between px-2">
+              <h2 className="font-display text-2xl font-black text-primary flex items-center gap-3">
+                <Heart className="h-6 w-6 text-accent" /> Coups de Cœur
               </h2>
-              <Link to="/profil?tab=wishlist" className="text-xs font-bold text-accent hover:underline flex items-center gap-1">
-                Gérer mes favoris <ArrowRight className="h-3 w-3" />
+              <Link to="/profil?tab=wishlist" className="group flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-accent transition-all">
+                Gérer mes favoris <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {loadingWishlist ? Array(4).fill(0).map((_, i) => <div key={i} className="aspect-square bg-muted/20 animate-pulse rounded-2xl" />) :
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+              {loadingWishlist ? Array(4).fill(0).map((_, i) => <div key={i} className="aspect-[4/5] bg-slate-100 animate-pulse rounded-3xl" />) :
                wishlistProducts.length === 0 ? (
-                <div className="col-span-full py-8 text-center bg-secondary/10 rounded-3xl">
-                  <p className="text-sm text-muted-foreground">Enregistrez vos articles préférés pour les retrouver ici.</p>
+                <div className="col-span-full py-12 text-center bg-slate-50/50 backdrop-blur-sm rounded-[2.5rem] border border-dashed border-slate-200">
+                  <p className="text-sm font-medium text-slate-400 italic">Enregistrez vos articles préférés pour les retrouver ici.</p>
                 </div>
                ) : wishlistProducts.map(p => (
-                <div key={p.id} className="relative group">
-                  <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-muted shadow-sm group-hover:shadow-md transition-all">
-                    <img src={p.images?.[0]} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <div key={p.id} className="relative group cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
+                  <div className="aspect-[4/5] overflow-hidden rounded-[2rem] bg-slate-100 shadow-soft group-hover:shadow-premium transition-all duration-500">
+                    <img src={p.images?.[0]} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   </div>
-                  <div className="absolute bottom-2 left-2 right-2 bg-white/80 backdrop-blur-md p-2 rounded-xl border border-white/20 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-                    <p className="text-[10px] font-black text-primary truncate uppercase">{p.name}</p>
+                  <div className="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                    <p className="text-[10px] font-black text-primary truncate uppercase tracking-tighter mb-1">{p.name}</p>
                     <p className="text-xs font-black text-accent">{formatCFA(p.price)}</p>
                   </div>
                 </div>
@@ -220,66 +251,76 @@ export function BuyerDashboard() {
 
         {/* Right Column: Ambassador & Quick Links */}
         <div className="space-y-8">
-          {/* Ambassador Premium Card */}
-          <Card className="border-none bg-gradient-to-br from-accent to-orange-500 text-white rounded-[2rem] overflow-hidden shadow-2xl relative group">
-            <div className="absolute right-0 top-0 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none"></div>
-            <div className="p-8 relative z-10 space-y-6">
-              <div className="h-14 w-14 rounded-[1.2rem] bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/10">
-                <Star className="h-8 w-8 text-white fill-white animate-pulse" />
+          {/* Ambassador Premium Card - Digital Curator Style */}
+          <Card className="border-none bg-accent text-white rounded-[2.5rem] overflow-hidden shadow-2xl relative group min-h-[340px] flex flex-col">
+            <div className="absolute right-0 top-0 h-full w-full bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-black/20 blur-[60px]"></div>
+            
+            <div className="p-10 relative z-10 flex flex-col h-full justify-between">
+              <div className="space-y-6">
+                <div className="h-16 w-16 rounded-[1.5rem] bg-white/10 backdrop-blur-md flex items-center justify-center shadow-2xl border border-white/20 group-hover:rotate-12 transition-transform">
+                  <Star className="h-8 w-8 text-white fill-current" />
+                </div>
+                <div>
+                  <h3 className="font-display text-3xl font-black leading-[0.9] uppercase tracking-tighter mb-4">
+                    Devenir<br/>Ambassadeur
+                  </h3>
+                  <p className="text-sm font-medium text-white/70 leading-relaxed max-w-[200px]">
+                    Rejoignez l'élite des conservateurs et récoltez des bénéfices à chaque recommandation.
+                  </p>
+                </div>
               </div>
-              <h3 className="font-display text-2xl font-black leading-tight uppercase tracking-tight">
-                Devenez<br/>Ambassadeur
-              </h3>
-              <p className="text-sm font-medium text-white/90 leading-relaxed italic">
-                "Partagez votre style, gagnez des récompenses exclusives."
-              </p>
-              <div className="pt-4">
-                 <Button onClick={() => navigate("/profil?tab=profile")} variant="secondary" className="w-full h-12 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-black/10 group-hover:scale-105 transition-transform">
-                   Mon Code Privé
+              
+              <div className="pt-8">
+                 <Button 
+                   onClick={() => navigate("/profil?tab=profile")} 
+                   className="w-full h-14 bg-white text-accent hover:bg-slate-50 rounded-[1.2rem] font-black uppercase text-xs tracking-widest shadow-xl group-hover:scale-[1.02] transition-all"
+                 >
+                   Obtenir mon code
                  </Button>
               </div>
             </div>
           </Card>
 
           {/* Quick Actions List */}
-          <Card className="border-none shadow-premium rounded-[2rem] bg-white p-6">
-            <h3 className="font-display font-black text-primary mb-6 flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-accent" /> Espace Sécurisé
+          <Card className="border-none shadow-soft rounded-[2.5rem] bg-white p-8">
+            <h3 className="font-display font-black text-primary mb-8 px-2 flex items-center gap-3 uppercase tracking-widest text-sm">
+              <ShieldCheck className="h-5 w-5 text-accent" /> Conciergerie Elite
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[
-                { icon: User, label: "Mon Profil", link: "/profil" },
-                { icon: Truck, label: "Suivi Express", link: "/suivi" },
+                { icon: User, label: "Profil Personnel", link: "/profil" },
+                { icon: Truck, label: "Suivi Logistique", link: "/suivi" },
                 { icon: MapPin, label: "Boutiques Proches", link: "/boutiques" },
-                { icon: MessageSquare, label: "Support Client", link: "https://wa.me/..." },
+                { icon: MessageSquare, label: "Assistance VIP", link: "https://wa.me/..." },
               ].map((item, i) => (
-                <Link key={i} to={item.link} className="flex items-center justify-between p-3 rounded-2xl hover:bg-secondary/20 transition-all group">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-secondary/30 flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-colors">
+                <Link key={i} to={item.link} className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 transition-all group border border-transparent hover:border-slate-100">
+                  <div className="flex items-center gap-4">
+                    <div className="h-11 w-11 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-accent group-hover:text-white transition-all shadow-sm">
                       <item.icon className="h-5 w-5" />
                     </div>
-                    <span className="text-sm font-bold text-primary">{item.label}</span>
+                    <span className="text-sm font-bold text-primary group-hover:translate-x-1 transition-transform">{item.label}</span>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-accent opacity-0 group-hover:opacity-100 transform -translate-x-3 group-hover:translate-x-0 transition-all" />
                 </Link>
               ))}
             </div>
           </Card>
 
           {/* Followed Shops Teaser */}
-          <section className="px-2">
-            <h3 className="font-display font-black text-primary mb-4 text-sm uppercase tracking-widest">Vos Boutiques Favorites</h3>
-            {loadingFollowed ? <div className="space-y-2">{Array(3).fill(0).map((_, i) => <div key={i} className="h-16 bg-muted/20 animate-pulse rounded-2xl" />)}</div> :
-             followedShops.length === 0 ? <p className="text-xs text-muted-foreground italic">Vous ne suivez aucune boutique encore.</p> :
-             <div className="space-y-3">
+          <section className="px-4 py-6 bg-slate-50/50 rounded-[2.5rem] mt-4 shadow-inner">
+            <h3 className="font-display font-black text-slate-400 mb-6 text-[10px] uppercase tracking-[0.2em] px-2 text-center">Partenaires Favoris</h3>
+            {loadingFollowed ? <div className="space-y-3">{Array(3).fill(0).map((_, i) => <div key={i} className="h-16 bg-white animate-pulse rounded-2xl" />)}</div> :
+             followedShops.length === 0 ? <p className="text-xs text-slate-400 italic text-center px-4">Cultivez votre cercle en suivant vos boutiques favorites.</p> :
+             <div className="space-y-4">
                {followedShops.map(shop => (
-                 <Link key={shop.id} to={`/boutique/${shop.id}`} className="flex items-center gap-3 group">
-                   <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-accent/20 group-hover:ring-accent transition-all">
+                 <Link key={shop.id} to={`/boutique/${shop.id}`} className="flex items-center gap-4 group p-2 rounded-2xl hover:bg-white transition-all">
+                   <div className="h-14 w-14 rounded-2xl overflow-hidden border-4 border-white shadow-premium group-hover:scale-110 transition-transform">
                      <img src={shop.image} alt={shop.name} className="h-full w-full object-cover" />
                    </div>
                    <div>
-                     <p className="text-xs font-black text-primary group-hover:text-accent transition-colors">{shop.name}</p>
-                     <p className="text-[10px] text-muted-foreground">{shop.neighborhood}</p>
+                     <p className="text-sm font-black text-primary group-hover:text-accent transition-colors">{shop.name}</p>
+                     <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest leading-none mt-1">{shop.neighborhood}</p>
                    </div>
                  </Link>
                ))}

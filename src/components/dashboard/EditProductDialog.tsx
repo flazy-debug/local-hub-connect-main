@@ -86,8 +86,8 @@ export default function EditProductDialog({ product, open, onOpenChange, onSaved
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="font-display">Modifier le produit</DialogTitle>
+        <DialogHeader className="pb-4 border-b border-slate-50">
+          <DialogTitle className="font-display text-2xl font-black uppercase tracking-tighter text-primary">Configuration du Produit</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-2">
@@ -152,9 +152,11 @@ export default function EditProductDialog({ product, open, onOpenChange, onSaved
             <Label>Photos</Label>
             <ImageUpload images={form.images} onChange={(imgs) => set("images", imgs)} maxImages={5} />
           </div>
-          <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={saving}>
-            {saving ? "Enregistrement..." : "Enregistrer"}
-          </Button>
+          <div className="pt-4">
+            <Button type="submit" className="w-full bg-accent hover:bg-accent-hover text-white h-14 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-accent/20 transition-all hover:scale-[1.02]" disabled={saving}>
+              {saving ? "Synchronisation..." : "Mettre à jour la collection"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

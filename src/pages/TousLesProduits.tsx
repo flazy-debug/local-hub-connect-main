@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import { categories, neighborhoods, formatCFA } from "@/lib/mock-data";
 import { products as mockProducts } from "@/lib/mock-data";
@@ -14,8 +14,9 @@ import PageTransition from "@/components/PageTransition";
 import PullToRefresh from "@/components/PullToRefresh";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function Catalogue() {
+export default function TousLesProduits() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const queryParam = searchParams.get("q") || "";
   const catParam = searchParams.get("category") || "all";
   
@@ -109,7 +110,7 @@ export default function Catalogue() {
           };
         });
 
-        // Client-side price filtering (easier than Supabase complex filters for ranges)
+        // Client-side price filtering
         let filtered = mapped;
         if (priceRange === "0-10000") filtered = filtered.filter(p => p.price <= 10000);
         if (priceRange === "10000-30000") filtered = filtered.filter(p => p.price >= 10000 && p.price <= 30000);
@@ -125,7 +126,25 @@ export default function Catalogue() {
 
         setDbProducts(filtered);
       } else {
-        setDbProducts([]);
+        // Fallback to mock data if DB is empty or no search results found
+        // This ensures consistent experience with homepage
+        const mockFiltered = mockProducts.filter(p => {
+          const matchesSearch = !debouncedSearch || 
+            p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+            p.description.toLowerCase().includes(debouncedSearch.toLowerCase());
+          const matchesCat = category === "all" || p.category === category;
+          const matchesCond = condition === "all" || p.condition === condition;
+          const matchesNeigh = neighborhood === "all" || p.neighborhood === neighborhood;
+          return matchesSearch && matchesCat && matchesCond && matchesNeigh;
+        });
+
+        // Price filter for mock data
+        let finalMock = mockFiltered;
+        if (priceRange === "0-10000") finalMock = finalMock.filter(p => p.price <= 10000);
+        if (priceRange === "10000-30000") finalMock = finalMock.filter(p => p.price >= 10000 && p.price <= 30000);
+        if (priceRange === "30000+") finalMock = finalMock.filter(p => p.price >= 30000);
+
+        setDbProducts(finalMock);
       }
     } catch (error: any) {
       console.error("Error fetching products:", error);
@@ -139,6 +158,14 @@ export default function Catalogue() {
     fetchProducts();
   }, [fetchProducts]);
 
+  // Special Redirection for Voiket (Car Rental)
+  useEffect(() => {
+    if (category === "location-voiture") {
+      window.open("https://voiket.com", "_blank");
+      setCategory("all"); // Reset to avoid loop or stuck state
+    }
+  }, [category]);
+
   const handleRefresh = async () => { await fetchProducts(); };
 
   return (
@@ -147,8 +174,8 @@ export default function Catalogue() {
         <div className="min-h-screen py-8 bg-slate-50/50">
           <div className="container">
             <header className="mb-8">
-              <h1 className="font-display text-4xl font-black text-primary uppercase tracking-tighter">Catalogue</h1>
-              <p className="mt-1 text-muted-foreground font-medium">Découvrez les trésors de vos boutiques locales à Lomé</p>
+              <h1 className="font-display text-4xl font-black text-primary uppercase tracking-tighter">Tous les produits</h1>
+              <p className="mt-1 text-muted-foreground font-medium">Découvrez les trésors de vos boutiques locales</p>
             </header>
 
             {/* Search & Filters Centralized */}
@@ -197,11 +224,30 @@ export default function Catalogue() {
             </div>
 
             {/* Active Badges */}
-            {(category !== "all" || condition !== "all" || neighborhood !== "all") && (
-              <div className="mt-6 flex flex-wrap gap-2">
+            {(category !== "all" || condition !== "all" || neighborhood !== "all" || priceRange !== "all" || search !== "") && (
+              <div className="mt-6 flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">Filtres actifs :</span>
                 {category !== "all" && <FilterBadge label={categories.find(c => c.id === category)?.name} onRemove={() => setCategory("all")} />}
                 {condition !== "all" && <FilterBadge label={condition === "neuf" ? "Neuf" : "Occasion"} onRemove={() => setCondition("all")} />}
                 {neighborhood !== "all" && <FilterBadge label={neighborhood} onRemove={() => setNeighborhood("all")} />}
+                {priceRange !== "all" && <FilterBadge label={priceRange.replace("-", " à ").replace("+", "+ CFA")} onRemove={() => setPriceRange("all")} />}
+                {search !== "" && <FilterBadge label={`"${search}"`} onRemove={() => setSearch("")} />}
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    setSearch("");
+                    setCategory("all");
+                    setCondition("all");
+                    setNeighborhood("all");
+                    setPriceRange("all");
+                    setSearchParams({});
+                  }}
+                  className="h-8 rounded-full px-4 text-[10px] font-black uppercase text-destructive hover:bg-destructive/10"
+                >
+                  Tout effacer
+                </Button>
               </div>
             )}
 
@@ -215,7 +261,7 @@ export default function Catalogue() {
                 <>
                   <div className="mb-6 flex items-center justify-between">
                     <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                      {dbProducts.length} résultat{dbProducts.length > 1 ? "s" : ""} à Lomé
+                      {dbProducts.length} résultat{dbProducts.length > 1 ? "s" : ""} trouvés
                     </p>
                   </div>
                   
@@ -226,28 +272,48 @@ export default function Catalogue() {
                       ))}
                     </div>
                   ) : (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="rounded-[40px] bg-white p-16 text-center shadow-premium"
-                    >
-                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-slate-50">
-                        <PackageSearch className="h-12 w-12 text-slate-300" />
-                      </div>
-                      <h3 className="text-2xl font-black text-primary">Oups ! Rien trouvé...</h3>
-                      <p className="mx-auto mt-3 max-w-sm text-muted-foreground leading-relaxed">
-                        Aucun article ne correspond à votre recherche à Lomé. 
-                        Essayez un autre mot-clé ou parcourez nos catégories.
-                      </p>
-                      <Button 
-                        variant="secondary" 
-                        size="lg" 
-                        className="mt-8 rounded-2xl bg-primary text-white hover:bg-primary/90 px-8"
-                        onClick={() => { setSearch(""); setCategory("all"); setCondition("all"); setNeighborhood("all"); }}
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="rounded-[40px] bg-white p-12 md:p-20 text-center shadow-premium border border-slate-50"
                       >
-                        Réinitialiser la recherche
-                      </Button>
-                    </motion.div>
+                        <div className="mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-slate-50 relative">
+                          <PackageSearch className="h-12 w-12 text-slate-300" />
+                          <div className="absolute -top-2 -right-2 h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center animate-bounce">
+                            <span className="text-primary text-xs">✨</span>
+                          </div>
+                        </div>
+                        <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">
+                          Univers <span className="text-primary italic">Bientôt disponible</span>
+                        </h3>
+                        <p className="mx-auto mt-4 max-w-sm text-slate-500 font-medium leading-relaxed italic">
+                          Nous préparons actuellement la meilleure sélection pour cette catégorie. Revenez très bientôt pour découvrir nos nouveautés Elite.
+                        </p>
+                        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                          <Button 
+                            variant="default" 
+                            size="lg" 
+                            className="rounded-2xl bg-slate-900 text-white hover:bg-primary px-10 h-14 font-black transition-all shadow-xl shadow-slate-200"
+                            onClick={() => { 
+                              setSearch(""); 
+                              setCategory("all"); 
+                              setCondition("all"); 
+                              setNeighborhood("all");
+                              setPriceRange("all");
+                            }}
+                          >
+                            Voir tous les produits
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="lg" 
+                            className="rounded-2xl border-slate-200 h-14 px-8 font-bold"
+                            onClick={() => navigate("/")}
+                          >
+                            Retour à l'accueil
+                          </Button>
+                        </div>
+                      </motion.div>
                   )}
                 </>
               )}

@@ -23,9 +23,9 @@ export default function Footer() {
           <div>
             <h4 className="font-display font-semibold">Marketplace</h4>
             <ul className="mt-3 space-y-2 text-sm opacity-80">
-              <li><Link to="/catalogue" className="hover:opacity-100">Catalogue</Link></li>
+              <li><Link to="/tous-les-produits" className="hover:opacity-100">Tous les produits</Link></li>
               <li><Link to="/boutiques" className="hover:opacity-100">Boutiques</Link></li>
-              <li><Link to="/catalogue?condition=occasion" className="hover:opacity-100">Occasion</Link></li>
+              <li><Link to="/tous-les-produits?condition=occasion" className="hover:opacity-100">Occasion</Link></li>
             </ul>
           </div>
 
@@ -40,7 +40,7 @@ export default function Footer() {
           <div>
             <h4 className="font-display font-semibold">Contact</h4>
             <ul className="mt-3 space-y-2 text-sm opacity-80">
-              <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Lomé, Togo</li>
+              <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Présence Internationale</li>
               <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> +228 90 XX XX XX</li>
               <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> contact@epuremarket.com</li>
             </ul>
@@ -48,7 +48,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 border-t border-primary-foreground/20 pt-6 text-center text-sm opacity-60">
-          © 2026 Epuremarket. Tous droits réservés.
+            &copy; {new Date().getFullYear()} Epuremarket. Une plateforme de Epure Group. Tous droits réservés.
         </div>
       </div>
     </footer>

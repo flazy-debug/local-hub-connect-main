@@ -11,7 +11,7 @@ import BottomTabBar from "@/components/BottomTabBar";
 import Footer from "@/components/Footer";
 import Index from "./pages/Index";
 import ShopDetail from "./pages/ShopDetail";
-import Catalogue from "./pages/Catalogue";
+import TousLesProduits from "./pages/TousLesProduits";
 import ProductDetail from "./pages/ProductDetail";
 import OrderTracking from "./pages/OrderTracking";
 import Boutiques from "./pages/Boutiques";
@@ -39,7 +39,7 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
-        <Route path="/catalogue" element={<Catalogue />} />
+        <Route path="/tous-les-produits" element={<TousLesProduits />} />
         <Route path="/produit/:id" element={<ProductDetail />} />
         <Route path="/suivi" element={<OrderTracking />} />
         <Route path="/boutiques" element={<Boutiques />} />

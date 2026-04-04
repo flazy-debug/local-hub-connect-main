@@ -34,9 +34,9 @@ import { cn } from "@/lib/utils";
 import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundary";
 
 const statusColors: Record<string, string> = {
-  pending: "bg-muted text-muted-foreground", paid: "bg-info/10 text-info",
-  preparing: "bg-warning/10 text-warning", shipped: "bg-accent/10 text-accent",
-  delivered: "bg-success/10 text-success", completed: "bg-success/10 text-success",
+  pending: "bg-slate-100 text-slate-400", paid: "bg-primary/10 text-primary",
+  preparing: "bg-accent/10 text-accent", shipped: "bg-slate-200 text-slate-500",
+  delivered: "bg-secondary/10 text-secondary", completed: "bg-secondary text-white",
 };
 const statusLabels: Record<string, string> = {
   pending: "En attente", paid: "Payé", preparing: "En préparation",
@@ -253,41 +253,42 @@ export function SellerDashboard() {
     <DashboardErrorBoundary>
       <div className="space-y-8">
         {/* Visual Bubbles Stats */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatCard icon={TrendingUp} label="Ventes Totales" value={formatCFA(totalSales)} color="bg-primary shadow-primary/20" />
-          <StatCard icon={ShoppingCart} label="Commandes en cours" value={pendingOrdersCount} color="bg-accent shadow-accent/20" suffix={pendingOrdersCount > 1 ? "actives" : "active"} />
-          <StatCard icon={Wallet} label="Gain Disponible" value={formatCFA(availableBalance)} color="bg-success shadow-success/20" />
-          <StatCard icon={lowStockCount > 0 ? AlertTriangle : ShieldCheck} label="Alertes Stock" value={lowStockCount} color={lowStockCount > 0 ? "bg-destructive shadow-destructive/20" : "bg-warning shadow-warning/20"} suffix="bas" />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <StatCard icon={TrendingUp} label="Ventes Totales" value={formatCFA(totalSales)} color="bg-primary" />
+          <StatCard icon={ShoppingCart} label="Commandes en cours" value={pendingOrdersCount} color="bg-slate-900" suffix={pendingOrdersCount > 1 ? "actives" : "active"} />
+          <StatCard icon={Wallet} label="Gain Disponible" value={formatCFA(availableBalance)} color="bg-accent" />
+          <StatCard icon={lowStockCount > 0 ? AlertTriangle : ShieldCheck} label="Alertes Stock" value={lowStockCount} color={lowStockCount > 0 ? "bg-destructive" : "bg-secondary"} suffix="bas" />
         </div>
 
         {/* Plan & Action Banner */}
-        <Card className="border-none shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-md">
-           <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className={cn("h-16 w-16 rounded-3xl flex items-center justify-center text-white", sellerPlan === "PRO" ? "bg-accent shadow-lg shadow-accent/30" : "bg-primary shadow-lg shadow-primary/30")}>
-                  <ShieldCheck className="h-8 w-8" />
+        <Card className="border-none shadow-premium rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl relative">
+           <div className="absolute top-0 right-0 h-64 w-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
+           <div className="p-8 md:p-12 flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
+              <div className="flex items-center gap-6">
+                <div className={cn("h-20 w-20 rounded-[2rem] flex items-center justify-center text-white", sellerPlan === "PRO" ? "bg-accent shadow-2xl shadow-accent/20" : "bg-primary shadow-2xl shadow-primary/20")}>
+                  <ShieldCheck className="h-10 w-10" />
                 </div>
                 <div>
-                   <h2 className="text-xl font-black text-primary flex items-center gap-2">
+                   <h2 className="text-2xl font-display font-black text-slate-900 tracking-tight flex items-center gap-2">
                      {sellerPlan === "PRO" ? "EPUREMARKET PRO ⭐" : "EPUREMARKET STANDARD"}
-                     {sellerPlan === "PARTNER" && <Badge className="bg-success">PARTENAIRE</Badge>}
+                     {sellerPlan === "PARTNER" && <Badge className="bg-secondary text-white border-none rounded-full px-4">PARTENAIRE</Badge>}
                    </h2>
-                   <p className="text-sm text-muted-foreground font-medium">
-                     {sellerPlan === "PRO" ? "Boosts illimités & Commissions 0%" : "Commission 14% par vente (Gateway + Plateforme)"}
+                   <p className="text-slate-500 font-medium text-lg leading-tight mt-1">
+                     {sellerPlan === "PRO" ? "Boosts illimités & Commissions 0%" : "Commission 14% par vente"}
                    </p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-4">
                 {sellerPlan !== "PRO" && (
-                   <Button size="lg" className="rounded-2xl bg-accent text-accent-foreground font-bold h-14 px-8 hover:bg-accent/90" asChild>
-                     <Link to="/pricing">PASSER PRO 🔥</Link>
+                   <Button size="lg" className="rounded-full bg-accent text-white font-black h-16 px-10 hover:bg-accent/90 shadow-xl shadow-accent/20 transition-all hover:scale-105 active:scale-95" asChild>
+                     <Link to="/pricing">DEVENIR PRO 🔥</Link>
                    </Button>
                 )}
                 <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="lg" className="rounded-2xl bg-primary text-white font-bold h-14 px-8"><Plus className="mr-2 h-5 w-5" /> NOUVEAU PRODUIT</Button>
+                    <Button size="lg" className="rounded-full bg-slate-900 text-white font-black h-16 px-10 shadow-xl shadow-slate-900/10 transition-all hover:scale-105 active:scale-95"><Plus className="mr-2 h-6 w-6" /> LISTER UN PRODUIT</Button>
                   </DialogTrigger>
-                  <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg rounded-[32px]">
+                  <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg rounded-3xl">
                     <DialogHeader><DialogTitle className="font-display text-2xl">Vendre un article</DialogTitle></DialogHeader>
                     <form onSubmit={handleAddProduct} className="space-y-4 mt-4">
                       <div className="space-y-2"><Label>Nom de l'article *</Label><Input placeholder="Ex: Basket Nike Air" value={pName} onChange={e => setPName(e.target.value)} required /></div>
@@ -299,21 +300,21 @@ export function SellerDashboard() {
                         <div className="space-y-2">
                           <Label>Catégorie *</Label>
                           <Select value={pCategory} onValueChange={setPCategory} required>
-                            <SelectTrigger className="rounded-xl"><SelectValue placeholder="Choisir" /></SelectTrigger>
+                            <SelectTrigger className="rounded-3xl"><SelectValue placeholder="Choisir" /></SelectTrigger>
                             <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>Quartier *</Label>
                           <Select value={pNeighborhood} onValueChange={setPNeighborhood} required>
-                            <SelectTrigger className="rounded-xl"><SelectValue placeholder="Chosir" /></SelectTrigger>
+                            <SelectTrigger className="rounded-3xl"><SelectValue placeholder="Chosir" /></SelectTrigger>
                             <SelectContent>{neighborhoods.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
                       </div>
                       <div className="space-y-2"><Label>Photos</Label><ImageUpload images={pImages} onChange={setPImages} maxImages={5} /></div>
                       
-                      <div className="flex items-start space-x-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 mt-4">
+                      <div className="flex items-start space-x-3 p-4 rounded-3xl bg-slate-50 border border-slate-100 mt-4">
                         <input 
                           type="checkbox" 
                           id="compliance" 
@@ -324,7 +325,11 @@ export function SellerDashboard() {
                           Je certifie que ce produit est 100% légal et conforme aux <Link to="/help" className="text-primary underline font-bold">règles publicitaires Meta/Facebook</Link>. Pas de contrefaçons, tabac, ou produits interdits.
                         </Label>
                       </div>
-                      <Button type="submit" className="w-full h-12 rounded-xl bg-primary text-white font-bold" disabled={submitting}>
+                      
+                      <p className="text-[10px] text-muted-foreground text-center px-4 leading-tight">
+                        En publiant sur Epuremarket, vous acceptez nos règles de sécurité et de conformité (Interdiction de produits illicites, tabac, etc.).
+                      </p>
+                      <Button type="submit" className="w-full h-12 rounded-3xl bg-primary text-white font-bold" disabled={submitting}>
                         {submitting ? "Publication..." : "Publier maintenant"}
                       </Button>
                     </form>
@@ -335,76 +340,83 @@ export function SellerDashboard() {
         </Card>
 
         {/* Analytics Chart */}
-        <Card className="border-none shadow-premium rounded-[32px] bg-white overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div>
-              <CardTitle className="text-xl font-black text-primary uppercase tracking-tighter">Epuremarket Analytics</CardTitle>
-              <CardDescription>Visualisation de vos revenus réels à Lomé</CardDescription>
+        <Card className="border-none shadow-premium rounded-[3rem] bg-white overflow-hidden relative">
+          <div className="absolute top-0 left-0 h-32 w-32 bg-primary/5 rounded-full -ml-16 -mt-16 blur-2xl" />
+          <CardHeader className="flex flex-col md:flex-row md:items-center justify-between pb-8 pt-10 px-10 gap-6">
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-primary uppercase tracking-[0.2em] mb-2">Performance du Shop</h3>
+              <CardTitle className="text-4xl font-display font-black text-slate-900 tracking-tighter">Votre Business en Direct</CardTitle>
+              <CardDescription className="text-slate-400 font-medium italic">Visualisation de vos revenus et de l'activité réelle</CardDescription>
             </div>
             <Select value={chartTimeframe} onValueChange={setChartTimeframe}>
-              <SelectTrigger className="w-[120px] rounded-full bg-slate-50 border-none h-10 font-bold text-xs">
+              <SelectTrigger className="w-[180px] rounded-full bg-slate-50 border-none h-14 font-black text-[10px] uppercase tracking-widest px-6 shadow-inner transition-all hover:bg-slate-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl border-none shadow-xl">
-                <SelectItem value="7d">7 derniers jours</SelectItem>
-                <SelectItem value="30d">30 derniers jours</SelectItem>
-                <SelectItem value="365d">Cette année</SelectItem>
+              <SelectContent className="rounded-[2rem] border-none shadow-3xl p-2">
+                <SelectItem value="7d" className="rounded-xl font-bold">7 derniers jours</SelectItem>
+                <SelectItem value="30d" className="rounded-xl font-bold">30 derniers jours</SelectItem>
+                <SelectItem value="365d" className="rounded-xl font-bold">Cette année</SelectItem>
               </SelectContent>
             </Select>
           </CardHeader>
-          <CardContent className="pt-4 px-2 md:px-6">
-            <div className="h-[350px] w-full relative">
-              <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <CardContent className="pb-10 pt-4 px-4 md:px-10">
+            <div className="h-[400px] w-full relative">
+              <ResponsiveContainer width="100%" height={400}>
+                <AreaChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorBrut" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={sellerPlan === "PRO" ? "#F97316" : "#22C55E"} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={sellerPlan === "PRO" ? "#F97316" : "#22C55E"} stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#6D28D9" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#6D28D9" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888888', fontWeight: 600 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888888', fontWeight: 600 }} />
+                  <CartesianGrid strokeDasharray="10 10" vertical={false} stroke="#F8FAFC" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }} dy={15} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: 900 }} tickFormatter={(val) => `${val/1000}k`} />
                   <Tooltip 
-                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', fontWeight: '900', padding: '20px', background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}
+                    itemStyle={{ color: '#6D28D9' }}
+                    labelStyle={{ color: '#94A3B8', marginBottom: '8px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
                     formatter={(value: any) => [formatCFA(value), ""]}
                   />
                   <Area 
-                    type="monotone" 
+                    type="natural" 
                     dataKey="brut" 
                     name="Vente Brute"
-                    stroke={sellerPlan === "PRO" ? "#F97316" : "#22C55E"} 
-                    strokeWidth={4}
+                    stroke="#6D28D9" 
+                    strokeWidth={5}
                     fillOpacity={1} 
                     fill="url(#colorBrut)" 
+                    animationDuration={2000}
                   />
                   <Area 
-                    type="monotone" 
+                    type="natural" 
                     dataKey="net" 
                     name="Gain Net"
-                    stroke="#0EA5E9" 
-                    strokeWidth={3}
-                    strokeDasharray="5 5"
+                    stroke="#7C3AED" 
+                    strokeWidth={2}
+                    strokeDasharray="8 8"
                     fill="transparent" 
                   />
-                  <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '11px', fontWeight: 'bold' }} />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ paddingTop: '40px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.6 }} />
                 </AreaChart>
               </ResponsiveContainer>
               {chartData[0]?.isMock && (
-                <p className="text-[10px] text-center text-muted-foreground mt-4 font-bold uppercase tracking-widest opacity-50">Démonstration (En attente de vos premières ventes)</p>
+                <div className="absolute inset-x-0 bottom-1/2 flex items-center justify-center pointer-events-none">
+                  <p className="bg-white/80 backdrop-blur-md px-6 py-2 rounded-full text-[10px] text-slate-300 font-black uppercase tracking-[0.3em] shadow-sm">Démonstration</p>
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="scrollbar-hide overflow-x-auto pb-2">
-            <TabsList className="inline-flex w-auto bg-slate-100 rounded-full p-1 gap-1">
-              <TabsTrigger value="products" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 font-bold h-10">Produits</TabsTrigger>
-              <TabsTrigger value="orders" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 font-bold h-10">Commandes ({pendingOrdersCount})</TabsTrigger>
-              <TabsTrigger value="transactions" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 font-bold h-10">Finances</TabsTrigger>
-              <TabsTrigger value="shop" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 font-bold h-10">Ma Page</TabsTrigger>
-              <TabsTrigger value="promos" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 font-bold h-10">Codes Promo</TabsTrigger>
+          <div className="scrollbar-hide overflow-x-auto pb-6">
+            <TabsList className="inline-flex w-auto bg-slate-100/50 backdrop-blur-xl rounded-full p-2 gap-2 shadow-inner">
+              <TabsTrigger value="products" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-2xl data-[state=active]:text-primary px-8 font-black h-12 text-xs uppercase tracking-widest transition-all">Produits</TabsTrigger>
+              <TabsTrigger value="orders" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-2xl data-[state=active]:text-primary px-8 font-black h-12 text-xs uppercase tracking-widest transition-all">Commandes ({pendingOrdersCount})</TabsTrigger>
+              <TabsTrigger value="transactions" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-2xl data-[state=active]:text-primary px-8 font-black h-12 text-xs uppercase tracking-widest transition-all">Finances</TabsTrigger>
+              <TabsTrigger value="shop" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-2xl data-[state=active]:text-primary px-8 font-black h-12 text-xs uppercase tracking-widest transition-all">Boutique</TabsTrigger>
+              <TabsTrigger value="promos" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-2xl data-[state=active]:text-primary px-8 font-black h-12 text-xs uppercase tracking-widest transition-all">Marketing</TabsTrigger>
             </TabsList>
           </div>
 
@@ -417,34 +429,35 @@ export function SellerDashboard() {
               transition={{ duration: 0.2 }}
             >
               <TabsContent value="products" className="mt-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {products.map(p => (
-                    <Card key={p.id} className="overflow-hidden border-none shadow-premium rounded-3xl bg-white transition-all hover:scale-[1.02]">
-                      <div className="flex p-4 gap-4">
-                        <div className="h-24 w-24 rounded-2xl bg-slate-100 overflow-hidden shrink-0 relative">
-                          <img src={p.images?.[0]} alt="" className="h-full w-full object-cover" />
+                    <Card key={p.id} className="overflow-hidden border-none shadow-premium rounded-[2.5rem] bg-white transition-all hover:scale-[1.03] hover:shadow-2xl group">
+                      <div className="flex p-6 gap-6">
+                        <div className="h-28 w-28 rounded-[2rem] bg-slate-50 overflow-hidden shrink-0 relative shadow-inner">
+                          <img src={p.images?.[0]} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-110" />
                           {p.stock < 3 && (
-                            <div className="absolute top-1 right-1 bg-destructive text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                              <AlertTriangle className="h-2 w-2" /> URGENT
+                            <div className="absolute top-2 right-2 bg-destructive text-white text-[8px] font-black px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                              <AlertTriangle className="h-2 w-2" /> STOCK BAS
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                           <div className="space-y-1">
-                            <h4 className="font-bold text-sm truncate text-primary uppercase">{p.name}</h4>
-                            <p className="text-primary font-black text-lg leading-none">{formatCFA(p.price)}</p>
+                            <h4 className="font-display font-black text-xs truncate text-slate-400 uppercase tracking-widest">{p.category}</h4>
+                            <h3 className="font-display font-black text-lg truncate text-primary tracking-tight leading-none">{p.name}</h3>
+                            <p className="text-secondary font-black text-xl leading-none mt-2">{formatCFA(p.price)}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                             <Badge variant={p.stock < 3 ? "destructive" : "secondary"} className="text-[9px] font-black rounded-full">
+                             <Badge variant={p.stock < 3 ? "destructive" : "outline"} className="text-[10px] font-black rounded-full px-3 py-1 border-slate-100">
                                STOCK: {p.stock}
                              </Badge>
-                             {p.is_boosted && <Badge className="bg-accent text-white text-[9px] font-bold rounded-full border-none">🔥 BOOSTÉ</Badge>}
+                             {p.is_boosted && <Badge className="bg-accent text-white text-[10px] font-black rounded-full border-none shadow-lg shadow-accent/20 px-3 py-1">🔥 BOOSTÉ</Badge>}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-slate-100" onClick={() => setEditProduct(p)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-slate-100" onClick={() => { setSelectedBoostProduct(p); setBoostDialogOpen(true); }}><Megaphone className="h-4 w-4" /></Button>
-                          <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-slate-100 text-destructive" onClick={() => deleteProduct(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="flex flex-col gap-2 shrink-0">
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-slate-50 hover:bg-primary hover:text-white transition-colors" onClick={() => setEditProduct(p)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-slate-50 hover:bg-accent hover:text-white transition-colors" onClick={() => { setSelectedBoostProduct(p); setBoostDialogOpen(true); }}><Megaphone className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-slate-50 hover:bg-destructive hover:text-white transition-colors" onClick={() => deleteProduct(p.id)}><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </div>
                     </Card>
@@ -459,43 +472,52 @@ export function SellerDashboard() {
               </TabsContent>
 
               <TabsContent value="orders" className="mt-4">
-                <Card className="border-none shadow-premium rounded-[32px] bg-white">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
+                <Card className="border-none shadow-premium rounded-[3rem] bg-white overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-slate-50">
                       {orders.length === 0 ? (
-                        <div className="py-20 text-center text-slate-300 font-black uppercase tracking-widest">Zéro commande en attente</div>
+                        <div className="py-32 text-center">
+                          <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <ShoppingCart className="h-10 w-10 text-slate-200" />
+                          </div>
+                          <p className="text-slate-300 font-black uppercase tracking-[0.3em]">Aucune commande active</p>
+                        </div>
                       ) : (
                         orders.map((order) => (
-                          <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-3xl bg-slate-50 border-none gap-6 transition-all hover:bg-slate-100/50">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-3">
-                                <Badge className="bg-primary/10 text-primary border-none text-[10px] h-6 px-3 rounded-full font-black">#{order.order_number}</Badge>
-                                <Badge className={cn("text-[9px] h-6 rounded-full font-bold px-3 border-none", statusColors[order.status])}>
+                          <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-10 hover:bg-slate-50/50 transition-colors gap-8">
+                            <div className="space-y-6">
+                              <div className="flex items-center gap-4">
+                                <Badge className="bg-primary/5 text-primary border-none text-[10px] h-8 px-5 rounded-full font-black tracking-widest shadow-sm">ORD-{order.order_number}</Badge>
+                                <Badge className={cn("text-[10px] h-8 rounded-full font-black px-5 border-none shadow-sm uppercase tracking-widest", statusColors[order.status])}>
                                   {statusLabels[order.status] || order.status}
                                 </Badge>
                               </div>
-                              <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-xl">👤</div>
+                              <div className="flex items-center gap-6">
+                                <div className="h-16 w-16 rounded-[1.5rem] bg-primary/5 shadow-inner flex items-center justify-center text-3xl">👤</div>
                                 <div>
-                                  <p className="text-sm font-black text-primary uppercase">{order.customer_name}</p>
-                                  <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5"><Calendar className="h-3 w-3" /> {new Date(order.created_at).toLocaleDateString()} • {order.items?.length || 0} articles</p>
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Client</p>
+                                  <p className="text-xl font-display font-black text-slate-900 leading-none">{order.customer_name}</p>
+                                  <p className="text-xs text-slate-500 font-medium flex items-center gap-2 mt-2">
+                                    <Calendar className="h-3 w-3" /> {new Date(order.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                  </p>
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center justify-between md:justify-end gap-6 shrink-0 border-t md:border-t-0 pt-4 md:pt-0">
+                            <div className="flex items-center justify-between md:justify-end gap-10 shrink-0 border-t md:border-t-0 pt-8 md:pt-0">
                               <div className="text-right">
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Payé</p>
-                                <p className="text-2xl font-black text-primary">{formatCFA(order.total)}</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 leading-none">Net à Percevoir</p>
+                                <p className="text-3xl font-display font-black text-secondary tracking-tighter leading-none">{formatCFA(order.total)}</p>
+                                <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">{order.items?.length || 1} article(s)</p>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex gap-3">
                                 {order.status === "paid" && (
-                                  <Button className="h-12 rounded-xl bg-primary text-white font-black px-6" onClick={() => updateOrderStatus(order.id, "preparing")}>PRÉPARER</Button>
+                                  <Button className="h-14 rounded-full bg-primary text-white font-black px-8 shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95" onClick={() => updateOrderStatus(order.id, "preparing")}>PRÉPARER</Button>
                                 )}
                                 {order.status === "preparing" && (
-                                  <Button className="h-12 rounded-xl bg-accent text-white font-black px-6 shadow-lg shadow-accent/20" onClick={() => setProofOrderId(order.id)}>EXPÉDIER</Button>
+                                  <Button className="h-14 rounded-full bg-accent text-white font-black px-8 shadow-xl shadow-accent/20 transition-all hover:scale-105 active:scale-95" onClick={() => setProofOrderId(order.id)}>EXPÉDIER</Button>
                                 )}
-                                <Button size="icon" variant="outline" className="h-12 w-12 rounded-xl bg-white border-none shadow-sm" asChild>
-                                  <Link to={`/suivi?id=${order.id}`}><ExternalLink className="h-5 w-5" /></Link>
+                                <Button size="icon" variant="ghost" className="h-14 w-14 rounded-full bg-slate-50 hover:bg-slate-100 transition-all active:scale-90 shadow-inner" asChild>
+                                  <Link to={`/suivi?id=${order.id}`}><ExternalLink className="h-6 w-6 text-slate-400" /></Link>
                                 </Button>
                               </div>
                             </div>
@@ -530,7 +552,7 @@ export function SellerDashboard() {
                             </TableCell>
                             <TableCell className="text-xs text-right font-medium">{formatCFA(tx.amount_total)}</TableCell>
                             <TableCell className="text-xs text-right pr-6">
-                              <Badge className={cn("rounded-full font-black text-[10px] border-none", tx.status === "completed" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                              <Badge className={cn("rounded-full font-black text-[10px] border-none", tx.status === "completed" ? "bg-success/10 text-success" : "bg-slate-100 text-slate-600")}>
                                 {formatCFA(tx.seller_payout)}
                               </Badge>
                             </TableCell>
@@ -552,11 +574,11 @@ export function SellerDashboard() {
                           <div className="flex gap-2">
                             <div className="relative flex-1">
                               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm leading-none">/s/</span>
-                              <Input value={shopSlug} onChange={e => setShopSlug(e.target.value)} className="pl-9 h-12 rounded-xl bg-slate-50 border-none shadow-inner font-bold" />
+                              <Input value={shopSlug} onChange={e => setShopSlug(e.target.value)} className="pl-9 h-12 rounded-3xl bg-slate-50 border-none shadow-inner font-bold" />
                             </div>
-                            <Button className="h-12 rounded-xl" onClick={saveShopInfo}>Valider</Button>
+                            <Button className="h-12 rounded-3xl" onClick={saveShopInfo}>Valider</Button>
                           </div>
-                          <div className="p-4 rounded-2xl bg-accent/5 border border-accent/10 flex items-center justify-between">
+                          <div className="p-4 rounded-3xl bg-accent/5 border border-accent/10 flex items-center justify-between">
                              <div className="truncate pr-4">
                                <p className="text-[10px] font-black uppercase text-accent mb-0.5">Votre URL publique</p>
                                <p className="text-xs font-mono font-medium truncate">{window.location.origin}/s/{shopSlug || "..."}</p>
@@ -589,14 +611,15 @@ export function SellerDashboard() {
 function StatCard({ icon: Icon, label, value, color, suffix }: any) {
   return (
     <motion.div 
-      whileHover={{ y: -5 }}
-      className={cn("flex flex-col items-center justify-center rounded-[32px] p-6 text-center text-white shadow-lg", color)}
+      whileHover={{ y: -8 }}
+      className={cn("flex flex-col items-center justify-center rounded-[3rem] p-8 text-center text-white shadow-2xl relative overflow-hidden group", color)}
     >
-      <div className="mb-3 h-10 w-10 rounded-2xl bg-white/20 flex items-center justify-center">
-        <Icon className="h-6 w-6" />
+      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="mb-4 h-14 w-14 rounded-[1.5rem] bg-white/20 backdrop-blur-md flex items-center justify-center relative z-10">
+        <Icon className="h-8 w-8" />
       </div>
-      <span className="text-2xl font-black leading-none mb-1 tracking-tighter">{value}</span>
-      <p className="text-[9px] uppercase font-black tracking-widest opacity-80">{label} {suffix && <span className="opacity-50">• {suffix}</span>}</p>
+      <span className="text-3xl font-display font-black leading-none mb-2 tracking-tighter relative z-10">{value}</span>
+      <p className="text-[10px] uppercase font-black tracking-[0.2em] opacity-70 relative z-10">{label} {suffix && <span className="opacity-50">• {suffix}</span>}</p>
     </motion.div>
   );
 }
@@ -609,7 +632,7 @@ function SocialInput({ icon: Icon, value, onChange, placeholder }: any) {
         placeholder={placeholder} 
         value={value || ""} 
         onChange={e => onChange(e.target.value)} 
-        className="pl-12 h-12 rounded-xl bg-slate-50 border-none shadow-inner text-sm font-medium" 
+        className="pl-12 h-12 rounded-3xl bg-slate-50 border-none shadow-inner text-sm font-medium" 
       />
     </div>
   );

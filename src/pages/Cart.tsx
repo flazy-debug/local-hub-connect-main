@@ -29,9 +29,9 @@ export default function Cart() {
         <ShoppingBag className="mx-auto h-16 w-16 text-muted-foreground/30" />
         <h2 className="mt-4 font-display text-2xl font-bold">Votre panier est vide</h2>
         <p className="mt-2 text-muted-foreground">Découvrez nos produits et ajoutez-les à votre panier</p>
-        <Link to="/catalogue">
-          <Button className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90">
-            Parcourir le catalogue
+        <Link to="/tous-les-produits">
+          <Button className="mt-6 bg-primary text-white hover:bg-primary/90">
+            Parcourir nos produits
           </Button>
         </Link>
       </div>
@@ -151,7 +151,7 @@ export default function Cart() {
   return (
     <div className="min-h-screen py-8">
       <div className="container">
-        <Link to="/catalogue" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/tous-les-produits" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Continuer mes achats
         </Link>
 
@@ -184,14 +184,14 @@ export default function Cart() {
 
                     <div className="mt-1 flex items-center gap-3 text-[10px] font-bold uppercase tracking-tighter text-muted-foreground/60">
                       {item.deliveryMethod === "pickup" ? (
-                        <div className="flex items-center gap-1 bg-secondary/30 px-2 py-0.5 rounded-full"><ShoppingBag className="h-2.5 w-2.5" /> Retrait</div>
+                        <div className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full"><ShoppingBag className="h-2.5 w-2.5" /> Retrait</div>
                       ) : (
                         <div className="flex items-center gap-1 bg-accent/10 text-accent px-2 py-0.5 rounded-full"><Truck className="h-2.5 w-2.5" /> Livraison</div>
                       )}
                     </div>
 
                     <div className="mt-3 flex items-center justify-between">
-                      <div className="flex items-center bg-secondary/40 rounded-xl p-1 border border-white/50 shadow-sm">
+                      <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-white/50 shadow-sm">
                         <button
                           onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                           className={cn("flex h-8 w-8 items-center justify-center rounded-lg transition-colors", 
@@ -263,7 +263,7 @@ export default function Cart() {
                     return acc;
                   }, {} as Record<string, { items: typeof items; total: number }>);
                   return Object.entries(groups).map(([seller, g]) => (
-                    <div key={seller} className="rounded-2xl bg-secondary/20 p-4 border border-white/50">
+                    <div key={seller} className="rounded-2xl bg-slate-100/50 p-4 border border-white/50">
                       <p className="text-[10px] font-black uppercase text-[#142642] tracking-widest">{seller}</p>
                       <div className="mt-2 space-y-1">
                         {g.items.map(i => (

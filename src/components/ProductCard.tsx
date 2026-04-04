@@ -1,109 +1,87 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Product } from "@/lib/types";
-import { formatCFA } from "@/lib/mock-data";
-import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, ShoppingBag } from "lucide-react";
-import VerificationBadge from "@/components/VerificationBadge";
-import WishlistButton from "@/components/WishlistButton";
+import { formatCFA } from "@/lib/utils";
+import { User, ArrowRight, MapPin } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function ProductCard({ product }: { product: Product }) {
+  const navigate = useNavigate();
+
   return (
-    <Link to={`/produit/${product.id}`} className="group">
-      <div className={`overflow-hidden rounded-xl border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${product.isBoosted ? "ring-1 ring-accent/30 shadow-md shadow-accent/5" : ""}`}>
-        <div className="relative aspect-square overflow-hidden bg-secondary">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      onClick={() => navigate(`/produit/${product.id}`)}
+      className="group card-lift h-full cursor-pointer flex flex-col"
+    >
+      {/* Product Image Wrapper */}
+      <div className="relative aspect-[4/5] overflow-hidden p-3 pb-0">
+        <div className="relative h-full w-full overflow-hidden rounded-[1.75rem] bg-slate-50/50">
           <img
-            src={product.images[0]}
+            src={product.images?.[0] || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1000&auto=format&fit=crop"}
             alt={product.name}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
           />
-          <div className="absolute left-3 top-3 flex gap-2">
-            <Badge variant={product.condition === "neuf" ? "default" : "secondary"} className={product.condition === "neuf" ? "bg-success text-success-foreground" : ""}>
-              {product.condition === "neuf" ? "Neuf" : "Occasion"}
-            </Badge>
-            {product.isBoosted && (
-              <Badge className="bg-accent text-accent-foreground border-none animate-pulse">🔥 Boosté</Badge>
-            )}
+          
+          {/* Shop Badge (Floating) */}
+          <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-20">
+            <div className="bg-white/90 backdrop-blur-xl text-primary text-[9px] font-black py-2.5 px-4 rounded-2xl flex items-center justify-between border-none shadow-[0_8px_32px_rgba(0,0,0,0.05)]">
+              <span className="truncate uppercase tracking-wider">{product.sellerName || "Épure Boutique"}</span>
+              <div className="h-2 w-2 rounded-full bg-secondary animate-pulse" />
+            </div>
           </div>
-          {/* Wishlist + pickup badges */}
-          <div className="absolute right-3 top-3">
-            <WishlistButton productId={product.id} size="sm" />
-          </div>
-          {product.pickupAvailable && (
-            <div className="absolute bottom-3 right-3">
-              <Badge variant="outline" className="border-card bg-card/90 text-foreground backdrop-blur-sm">
-                <ShoppingBag className="mr-1 h-3 w-3" /> Pick-up
-              </Badge>
+
+          {/* New/Promo Badge */}
+          {product.promo_price && (
+            <div className="absolute top-4 left-4 bg-primary text-white text-[9px] font-black px-4 py-2 rounded-full shadow-lg z-20 uppercase tracking-widest">
+              Elite
             </div>
           )}
-        </div>
 
-        <div className="p-4">
-          <h3 className="font-display font-semibold leading-tight text-foreground line-clamp-2">
-            {product.name}
-          </h3>
-
-          <div className="mt-2 flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-              <span className="text-xs font-medium">{product.rating}</span>
-            </div>
-            <span className="text-xs text-muted-foreground">({product.reviewCount} avis)</span>
+          {/* Neighborhood Badge (Local Trust) */}
+          <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md text-slate-600 text-[9px] font-black px-4 py-2 rounded-full z-20 flex items-center gap-2">
+            <MapPin className="h-3 w-3 text-primary/60" />
+            <span className="uppercase tracking-[0.1em]">{product.neighborhood || "Lomé"}</span>
           </div>
-
-          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {product.neighborhood}
-          </div>
-
-          {/* Price with promo */}
-          <div className="mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {(product as any).promoPrice ? (
-                <>
-                  <p className="font-display text-lg font-bold text-accent">{formatCFA((product as any).promoPrice)}</p>
-                  <p className="text-xs text-muted-foreground line-through">{formatCFA(product.price)}</p>
-                </>
-              ) : (
-                <p className="font-display text-lg font-bold text-accent">{formatCFA(product.price)}</p>
-              )}
-            </div>
-
-            {/* Availability Logic */}
-            {["restauration", "fast-food"].includes(product.category) ? (
-              <Badge variant="outline" className={`border-none ${product.stock > 0 ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"} text-[10px] font-black uppercase`}>
-                {product.stock > 0 ? "👨‍🍳 En cuisine" : "❌ Épuisé"}
-              </Badge>
-            ) : (
-              product.stock < 5 && (
-                <span className="text-[10px] font-black uppercase text-destructive animate-pulse">
-                  Plus que {product.stock} !
-                </span>
-              )
-            )}
-          </div>
-
-          {/* Seller info - hidden for commission sellers */}
-          {product.sellerSubscription && product.sellerSubscription !== "STANDARD" ? (
-            <div className="mt-4 flex items-center gap-1 border-t pt-3 text-xs text-muted-foreground transition-colors group-hover:border-accent/20">
-              <Link
-                to={`/boutique/${product.sellerId}`}
-                onClick={(e) => e.stopPropagation()}
-                className="font-medium text-foreground/60 transition-colors group-hover:text-accent hover:underline"
-              >
-                {product.sellerName}
-              </Link>
-              <VerificationBadge status={product.sellerVerification} size="sm" />
-              <span>•</span>
-              <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{product.neighborhood}</span>
-            </div>
-          ) : (
-            <div className="mt-4 border-t pt-3 text-xs text-muted-foreground transition-colors group-hover:border-accent/20">
-              <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{product.neighborhood}</span>
-            </div>
-          )}
         </div>
       </div>
-    </Link>
+
+      {/* Product Info */}
+      <div className="flex flex-col p-6 pt-5 space-y-4 flex-1">
+        <div>
+          <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5">
+            <span className="w-1 h-1 rounded-full bg-primary/40" />
+            {product.category}
+          </div>
+          <h3 className="line-clamp-2 text-base font-black tracking-tight text-slate-900 group-hover:text-primary transition-colors leading-tight font-display">
+            {product.name}
+          </h3>
+        </div>
+        
+        <div className="flex items-center justify-between mt-auto">
+          <div className="flex flex-col">
+            {product.promo_price ? (
+              <>
+                <span className="text-[10px] text-slate-400 line-through font-bold mb-0.5">
+                  {formatCFA(product.price)}
+                </span>
+                <span className="text-xl font-black text-slate-900 tracking-tight font-display">
+                  {formatCFA(product.promo_price)}
+                </span>
+              </>
+            ) : (
+              <span className="text-xl font-black text-slate-900 tracking-tight font-display">
+                {formatCFA(product.price)}
+              </span>
+            )}
+          </div>
+          
+          <div className="h-11 w-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all transform group-hover:rotate-[-45deg] group-hover:scale-110">
+             <ArrowRight className="h-5 w-5" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }

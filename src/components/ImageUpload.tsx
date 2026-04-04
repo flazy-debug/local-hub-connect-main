@@ -77,14 +77,14 @@ export default function ImageUpload({ images, onChange, maxImages = 5 }: ImageUp
     <div className="space-y-2">
       <div className="flex flex-wrap gap-3">
         {images.map((url, i) => (
-          <div key={i} className="group relative h-20 w-20 overflow-hidden rounded-lg border bg-muted">
-            <img src={url} alt="" className="h-full w-full object-cover" />
+          <div key={i} className="group relative h-24 w-24 overflow-hidden rounded-2xl bg-slate-50 shadow-soft transition-all hover:shadow-premium">
+            <img src={url} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
             <button
               type="button"
               onClick={() => removeImage(i)}
-              className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+              className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-destructive shadow-lg opacity-0 transition-opacity group-hover:opacity-100"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ))}
@@ -94,14 +94,14 @@ export default function ImageUpload({ images, onChange, maxImages = 5 }: ImageUp
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground transition-colors hover:border-accent hover:text-accent"
+            className="flex h-24 w-24 flex-col items-center justify-center gap-2 rounded-2xl border-none bg-slate-50 text-slate-400 transition-all shadow-inner hover:bg-accent/5 hover:text-accent hover:shadow-soft"
           >
             {uploading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-6 w-6 animate-spin text-accent" />
             ) : (
               <>
-                <ImagePlus className="h-5 w-5" />
-                <span className="text-[10px]">Ajouter</span>
+                <ImagePlus className="h-6 w-6" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Ajouter</span>
               </>
             )}
           </button>

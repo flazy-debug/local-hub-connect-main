@@ -80,7 +80,7 @@ export default function AdminPanel() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-secondary/30 py-8">
+      <div className="min-h-screen bg-slate-50 py-8">
         <div className="container">
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">

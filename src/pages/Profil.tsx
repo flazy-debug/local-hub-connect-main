@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Package, MapPin, Phone, CheckCircle, Truck, ShoppingBag, Star, Heart, AlertTriangle } from "lucide-react";
+import { User, Package, MapPin, Phone, CheckCircle, Truck, ShoppingBag, Star, Heart, AlertTriangle, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,17 +17,21 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCFA, neighborhoods } from "@/lib/mock-data";
 import ShopCard from "@/components/ShopCard";
 import ProductCard from "@/components/ProductCard";
+import { cn } from "@/lib/utils";
 import { Shop, Product } from "@/lib/types";
 
 const statusLabels: Record<string, string> = {
   pending: "En attente", paid: "Payé", preparing: "En préparation",
   shipped: "Expédié", delivered: "Livré", completed: "Terminé",
 };
-import { MessageSquare } from "lucide-react";
-const statusColors: Record<string, string> = {
-  pending: "bg-muted text-muted-foreground", paid: "bg-info/10 text-info",
-  preparing: "bg-warning/10 text-warning", shipped: "bg-accent/10 text-accent",
-  delivered: "bg-success/10 text-success", completed: "bg-success/10 text-success",
+
+const statusColors:Record<string, string> = {
+  pending: "bg-slate-100 text-slate-600", 
+  paid: "bg-blue-50 text-blue-600",
+  preparing: "bg-indigo-50 text-indigo-600", 
+  shipped: "bg-blue-100 text-blue-700",
+  delivered: "bg-emerald-50 text-emerald-600", 
+  completed: "bg-emerald-50 text-emerald-600",
 };
 
 export default function Profil() {
@@ -204,7 +208,7 @@ export default function Profil() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary/30 py-8">
+    <div className="min-h-screen bg-[#F9FAFB] py-8">
       <div className="container max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="font-display text-3xl font-bold">Mon Profil</h1>
@@ -230,9 +234,9 @@ export default function Profil() {
                     </div>
                     <p className="font-bold text-lg text-primary">Le panier est vide</p>
                     <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto">Explorez nos milliers de produits et faites-vous plaisir !</p>
-                    <Link to="/catalogue" className="inline-block mt-6">
-                      <Button className="bg-accent text-accent-foreground hover:bg-accent/90 h-12 px-8 rounded-2xl font-bold shadow-lg shadow-accent/20">
-                        Parcourir le catalogue
+                    <Link to="/tous-les-produits" className="inline-block mt-6">
+                      <Button className="bg-primary text-white hover:bg-primary/90 h-12 px-8 rounded-2xl font-bold shadow-lg shadow-primary/20">
+                        Parcourir nos produits
                       </Button>
                     </Link>
                   </CardContent>
@@ -249,7 +253,7 @@ export default function Profil() {
                     </Badge>
                   </div>
 
-                  <div className="bg-secondary/20 rounded-2xl p-4 space-y-3">
+                  <div className="bg-slate-100/50 rounded-2xl p-4 space-y-3">
                     {(order.items as any[])?.map((item: any, i: number) => (
                       <div key={i} className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground/80"><span className="font-bold text-primary">{item.quantity}x</span> {item.name || item.product_name}</span>
@@ -335,7 +339,7 @@ export default function Profil() {
                 <Card><CardContent className="py-12 text-center">
                   <Heart className="mx-auto h-12 w-12 text-muted-foreground/30" />
                   <p className="mt-3 text-muted-foreground">Aucun produit en favoris.</p>
-                  <Link to="/catalogue"><Button className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">Parcourir le catalogue</Button></Link>
+                  <Link to="/tous-les-produits"><Button className="mt-4 bg-primary text-white hover:bg-primary/90">Parcourir nos produits</Button></Link>
                 </CardContent></Card>
               ) : (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -421,7 +425,7 @@ export default function Profil() {
                     </div>
 
                     {/* Programme Ambassadeur */}
-                    <div className="rounded-3xl border-none bg-gradient-to-br from-accent/20 to-accent/5 p-6 relative overflow-hidden group shadow-premium">
+                    <div className="rounded-3xl border-none bg-gradient-to-br from-primary/10 to-slate-50 p-6 relative overflow-hidden group shadow-premium">
                       <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-accent/20 blur-3xl group-hover:bg-accent/30 transition-all duration-700"></div>
                       <div className="relative z-10">
                         <h3 className="font-display text-xl font-black text-accent flex items-center gap-2">
