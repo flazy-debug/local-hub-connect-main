@@ -24,7 +24,7 @@ const statusLabels: Record<string, string> = {
 };
 const statusColors: Record<string, string> = {
   pending: "bg-slate-100 text-slate-600", paid: "bg-violet-100 text-violet-600",
-  preparing: "bg-amber-100 text-amber-600", shipped: "bg-accent/10 text-accent",
+  preparing: "bg-slate-50 text-slate-400", shipped: "bg-slate-50 text-slate-400",
   delivered: "bg-green-100 text-green-600", completed: "bg-green-100 text-green-600",
 };
 

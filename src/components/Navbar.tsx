@@ -29,7 +29,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 glass-morphism transition-all duration-300">
+    <nav className="sticky top-0 z-[50] glass-morphism transition-all duration-300">
       <div className="container flex h-16 items-center justify-between md:h-20 gap-8">
         <Link to="/" className="flex items-center gap-3 shrink-0 group transition-transform hover:scale-[1.02]">
           <div className="flex h-10 w-10 items-center justify-center rounded-3xl bg-primary shadow-[0_8px_24px_rgba(109,40,217,0.25)] md:h-12 md:w-12">

@@ -11,10 +11,11 @@ import BottomTabBar from "@/components/BottomTabBar";
 import Footer from "@/components/Footer";
 import Index from "./pages/Index";
 import ShopDetail from "./pages/ShopDetail";
-import TousLesProduits from "./pages/TousLesProduits";
 import ProductDetail from "./pages/ProductDetail";
+import TousLesProduits from "./pages/TousLesProduits";
 import OrderTracking from "./pages/OrderTracking";
 import Boutiques from "./pages/Boutiques";
+import AnnouncementBar from "@/components/AnnouncementBar";
 import Auth from "./pages/Auth";
 import DevenirVendeur from "./pages/DevenirVendeur";
 import Dashboard from "./pages/Dashboard";
@@ -77,8 +78,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <AnnouncementBar />
             <Navbar />
-            <main className="pb-16 md:pb-0">
+            <main className="pb-24 md:pb-0">
               <AnimatedRoutes />
             </main>
             <StickyWhatsApp />

@@ -3,7 +3,7 @@ import { Sparkles, Truck } from "lucide-react";
 
 export default function AnnouncementBar() {
   return (
-    <div className="bg-emerald-dark text-white overflow-hidden py-2 relative z-50">
+    <div className="bg-emerald-dark text-white overflow-hidden py-2 relative z-[60]">
       <motion.div 
         initial={{ x: "100%" }}
         animate={{ x: "-100%" }}

@@ -28,6 +28,8 @@ export interface Product {
     variants?: { name: string; required: boolean; values: string[] }[];
     extras?: { name: string; price: number }[];
   };
+  transaction_type?: "vente" | "location" | "service";
+  specifications?: Record<string, any>;
 }
 
 export interface Shop {

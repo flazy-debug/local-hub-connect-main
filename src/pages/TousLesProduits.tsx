@@ -26,6 +26,7 @@ export default function TousLesProduits() {
   const [condition, setCondition] = useState("all");
   const [neighborhood, setNeighborhood] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
+  const [transactionType, setTransactionType] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [dbProducts, setDbProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,9 @@ export default function TousLesProduits() {
       }
       if (neighborhood !== "all") {
         query = query.eq("neighborhood", neighborhood);
+      }
+      if (transactionType !== "all") {
+        query = query.eq("transaction_type", transactionType);
       }
 
       // Execute query
@@ -249,6 +253,29 @@ export default function TousLesProduits() {
                   Tout effacer
                 </Button>
               </div>
+            )}
+
+            {/* Quick Filters for specialized categories */}
+            {category === "immobilier" && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 flex flex-wrap items-center gap-3"
+              >
+                {[
+                  { id: 'all', name: 'Tous les biens', icon: '🏢' },
+                  { id: 'vente', name: 'Acheter', icon: '🏠' },
+                  { id: 'location', name: 'Louer', icon: '🔑' }
+                ].map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTransactionType(t.id)}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${transactionType === t.id ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" : "bg-white text-slate-500 shadow-sm hover:shadow-md border border-slate-100"}`}
+                  >
+                    <span className="text-lg">{t.icon}</span> {t.name}
+                  </button>
+                ))}
+              </motion.div>
             )}
 
             {/* Results */}

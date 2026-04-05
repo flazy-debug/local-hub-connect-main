@@ -33,6 +33,8 @@ export default function EditProductDialog({ product, open, onOpenChange, onSaved
     delivery_available: false,
     pickup_address: "",
     images: [] as string[],
+    transaction_type: "vente" as "vente" | "location" | "service",
+    specifications: {} as Record<string, any>,
   });
 
   useEffect(() => {
@@ -49,6 +51,8 @@ export default function EditProductDialog({ product, open, onOpenChange, onSaved
         delivery_available: product.delivery_available ?? false,
         pickup_address: product.pickup_address || "",
         images: product.images || [],
+        transaction_type: product.transaction_type || "vente",
+        specifications: product.specifications || {},
       });
     }
   }, [product]);
@@ -69,6 +73,8 @@ export default function EditProductDialog({ product, open, onOpenChange, onSaved
         delivery_available: form.delivery_available,
         pickup_address: form.pickup_address || null,
         images: form.images.length > 0 ? form.images : ["/placeholder.svg"],
+        transaction_type: form.transaction_type,
+        specifications: form.specifications,
       }).eq("id", product.id);
       if (error) throw error;
       toast({ title: "Produit mis à jour ✅" });
@@ -100,14 +106,86 @@ export default function EditProductDialog({ product, open, onOpenChange, onSaved
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Prix (CFA) *</Label>
-              <Input type="number" value={form.price} onChange={(e) => set("price", e.target.value)} required min={1} />
+              <Label>{form.category.toLowerCase().includes('service') ? "Tarif base / Déplacement (CFA) *" : "Prix (CFA) *"}</Label>
+              <div className="relative">
+                <Input type="number" value={form.price} onChange={(e) => set("price", e.target.value)} required min={1} className="pr-16" />
+                {form.transaction_type === 'location' && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">/ MOIS</span>}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Stock *</Label>
-              <Input type="number" value={form.stock} onChange={(e) => set("stock", e.target.value)} required min={0} />
-            </div>
+            {!(form.category === 'immobilier' || form.category === 'vehicules') && (
+              <div className="space-y-2">
+                <Label>Stock *</Label>
+                <Input type="number" value={form.stock} onChange={(e) => set("stock", e.target.value)} required min={0} />
+              </div>
+            )}
           </div>
+
+          {/* Specialized Fields: Immobilier */}
+          {form.category === 'immobilier' && (
+            <div className="space-y-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="space-y-2">
+                <Label>Type de Transaction</Label>
+                <div className="flex bg-white p-1 rounded-xl gap-1">
+                  {['vente', 'location'].map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => set("transaction_type", t as any)}
+                      className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${form.transaction_type === t ? "bg-primary text-white shadow-lg" : "text-slate-400 hover:bg-slate-50"}`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Surface (m²)</Label>
+                  <Input type="number" value={form.specifications?.surface || ""} onChange={(e) => set("specifications", { ...form.specifications, surface: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Pièces</Label>
+                  <Input type="number" value={form.specifications?.rooms || ""} onChange={(e) => set("specifications", { ...form.specifications, rooms: e.target.value })} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Specialized Fields: Automobile */}
+          {form.category === 'vehicules' && (
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="space-y-2">
+                <Label>Année</Label>
+                <Input type="number" value={form.specifications?.year || ""} onChange={(e) => set("specifications", { ...form.specifications, year: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Kilométrage (km)</Label>
+                <Input type="number" value={form.specifications?.km || ""} onChange={(e) => set("specifications", { ...form.specifications, km: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Carburant</Label>
+                <Select value={form.specifications?.fuel || "essence"} onValueChange={(v) => set("specifications", { ...form.specifications, fuel: v })}>
+                  <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="essence">Essence</SelectItem>
+                    <SelectItem value="diesel">Diesel</SelectItem>
+                    <SelectItem value="hybride">Hybride</SelectItem>
+                    <SelectItem value="electrique">Électrique</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Transmission</Label>
+                <Select value={form.specifications?.transmission || "automatique"} onValueChange={(v) => set("specifications", { ...form.specifications, transmission: v })}>
+                  <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="automatique">Automatique</SelectItem>
+                    <SelectItem value="manuelle">Manuelle</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Catégorie *</Label>

@@ -24,7 +24,7 @@ import PageTransition from "@/components/PageTransition";
 
 const statusColors: Record<string, string> = {
   pending: "bg-slate-100 text-slate-400", paid: "bg-primary/10 text-primary",
-  preparing: "bg-accent/10 text-accent", shipped: "bg-slate-200 text-slate-500",
+  preparing: "bg-slate-50 text-slate-400", shipped: "bg-slate-200 text-slate-500",
   delivered: "bg-secondary/10 text-secondary", completed: "bg-secondary text-white",
 };
 const statusLabels: Record<string, string> = {
@@ -191,11 +191,6 @@ export function PartnerDashboard() {
                 />
               </AreaChart>
             </ResponsiveContainer>
-            {chartData[0]?.isMock && (
-              <div className="absolute inset-x-0 bottom-1/2 flex items-center justify-center pointer-events-none">
-                <p className="bg-white/80 backdrop-blur-md px-8 py-3 rounded-full text-[10px] text-slate-300 font-black uppercase tracking-[0.4em] shadow-sm italic">Sourcing Demo Mode</p>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>

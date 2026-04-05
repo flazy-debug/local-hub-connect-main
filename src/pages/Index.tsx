@@ -12,7 +12,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
-import AnnouncementBar from "@/components/AnnouncementBar";
 import HeroCarousel from "@/components/home/HeroCarousel";
 import PromoBanner from "@/components/home/PromoBanner";
 import { motion } from "framer-motion";
@@ -29,7 +28,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <AnnouncementBar />
       
       {/* Hero Section - Full Width */}
       <section className="w-full">
@@ -61,8 +59,13 @@ const Index = () => {
                 className="group cursor-pointer flex flex-col items-center space-y-4"
                 onClick={() => cat.id === 'location-voiture' ? window.open('https://voiket.com', '_blank') : navigate(`/tous-les-produits?category=${cat.id}`)}
               >
-                <div className="h-20 w-20 md:h-24 md:w-24 bg-white rounded-full shadow-[0_12px_24px_rgba(20,27,43,0.04)] border-none flex items-center justify-center text-4xl transition-all duration-500 group-hover:shadow-[0_20px_48px_rgba(109,40,217,0.15)] group-hover:bg-primary group-hover:text-white">
+                <div className="h-20 w-20 md:h-24 md:w-24 bg-white rounded-full shadow-[0_12px_24px_rgba(20,27,43,0.04)] border-none flex items-center justify-center text-4xl transition-all duration-500 group-hover:shadow-[0_20px_48px_rgba(109,40,217,0.15)] group-hover:bg-primary group-hover:text-white relative">
                    {cat.icon === 'Car' ? '🚗' : cat.icon === 'Building' ? '🏢' : cat.icon === 'Smartphone' ? '📱' : cat.icon === 'Shirt' ? '👕' : cat.icon === 'Home' ? '🏠' : cat.icon === 'Briefcase' ? '💼' : cat.icon === 'Key' ? '🔑' : '✨'}
+                   {cat.id === 'location-voiture' && (
+                     <div className="absolute -top-1 -right-1 bg-accent text-[8px] font-black text-white px-2 py-1 rounded-full shadow-lg animate-pulse border-2 border-white">
+                       PARTENAIRE
+                     </div>
+                   )}
                 </div>
                 <h3 className="font-black text-slate-500 tracking-tight text-[11px] uppercase text-center group-hover:text-primary transition-colors">
                   {cat.name}
@@ -104,37 +107,60 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Voiket Banner - Editorial Integration */}
+        {/* Promo Grid (3 Sections) - Elite V1.3 */}
         <section className="py-12 container">
-           <div 
-             onClick={() => window.open("https://voiket.com", "_blank")}
-             className="cursor-pointer group relative bg-primary rounded-[3rem] p-10 md:p-20 overflow-hidden shadow-2xl transition-all hover:scale-[1.005]"
-           >
-             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-                <div className="text-center md:text-left space-y-6">
-                  <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-full text-white text-[10px] font-black uppercase tracking-widest">
-                    🚗 Location d'Excellence
-                  </div>
-                  <h2 className="text-4xl md:text-7xl font-black text-white tracking-tight leading-none font-display">
-                    Besoin de <br/> liberté ?
-                  </h2>
-                  <p className="text-white/60 text-lg md:text-xl font-bold max-w-md">
-                    <span className="text-white">Voiket.com</span> : La référence de location de voiture au Togo.
-                  </p>
-                  <Button className="bg-white text-primary hover:bg-slate-50 rounded-full h-16 px-12 font-black text-lg shadow-xl shadow-black/10">
-                    Louer sur Voiket
-                  </Button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Voiket - Location Premium */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              onClick={() => window.open("https://voiket.com", "_blank")}
+              className="group relative h-[400px] rounded-[3rem] overflow-hidden cursor-pointer shadow-xl"
+            >
+              <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Voiket" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+                <div className="inline-flex w-fit bg-primary/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-[10px] font-black uppercase tracking-widest mb-4">
+                  🚗 Location d'Excellence
                 </div>
-                <div className="relative">
-                  <div className="absolute -inset-10 bg-white/20 blur-[100px] rounded-full animate-pulse" />
-                  <img 
-                    src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800&auto=format&fit=crop" 
-                    alt="Voiket Car" 
-                    className="relative z-10 h-64 md:h-80 object-contain drop-shadow-[0_32px_64px_rgba(0,0,0,0.5)] transition-transform duration-700 group-hover:scale-105"
-                  />
+                <h3 className="text-3xl font-black text-white leading-tight mb-2">Voiket Premium</h3>
+                <p className="text-white/70 text-sm font-medium mb-6">La référence de location de voiture de luxe au Togo.</p>
+                <Button className="w-full bg-white text-primary hover:bg-slate-50 rounded-full font-black text-xs uppercase tracking-widest h-12">Explorer Voiket</Button>
+              </div>
+            </motion.div>
+
+            {/* Apple / Tech - Shopping Elite */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              onClick={() => navigate("/tous-les-produits?category=smartphone")}
+              className="group relative h-[400px] rounded-[3rem] overflow-hidden cursor-pointer shadow-xl bg-slate-50"
+            >
+              <img src="https://images.unsplash.com/photo-1510512271986-af140b75952c?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-multiply transition-transform duration-700 group-hover:scale-110" alt="Tech" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white via-white/10 to-transparent flex flex-col justify-end p-8">
+                <div className="inline-flex w-fit bg-slate-900/10 backdrop-blur-md px-4 py-1.5 rounded-full text-slate-900 text-[10px] font-black uppercase tracking-widest mb-4">
+                  📱 Univers Tech
                 </div>
-             </div>
-           </div>
+                <h3 className="text-3xl font-black text-slate-900 leading-tight mb-2">Elite Discovery</h3>
+                <p className="text-slate-500 text-sm font-medium mb-6">Les meilleures innovations Apple & Tech sur un seul portail.</p>
+                <Button className="w-full bg-slate-900 text-white hover:bg-slate-800 rounded-full font-black text-xs uppercase tracking-widest h-12">Démarrer High-Tech</Button>
+              </div>
+            </motion.div>
+
+            {/* Restauration - Epure treats */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              onClick={() => navigate("/tous-les-produits?category=restauration")}
+              className="group relative h-[400px] rounded-[3rem] overflow-hidden cursor-pointer shadow-xl bg-orange-50"
+            >
+              <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Food" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+                <div className="inline-flex w-fit bg-accent/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-[10px] font-black uppercase tracking-widest mb-4 text-accent">
+                  🍔 Saveurs & Plaisir
+                </div>
+                <h3 className="text-3xl font-black text-white leading-tight mb-2">Epure Treats</h3>
+                <p className="text-white/70 text-sm font-medium mb-6">Commandez vos plats préférés avec une livraison express.</p>
+                <Button className="w-full bg-accent text-white hover:bg-accent/90 rounded-full font-black text-xs uppercase tracking-widest h-12">Commander Food</Button>
+              </div>
+            </motion.div>
+          </div>
         </section>
 
         {/* Latest Arrivals */}
@@ -211,7 +237,7 @@ const Index = () => {
                       </Button>
                     </Link>
                     <Link to="/boutiques">
-                      <Button size="lg" variant="outline" className="rounded-3xl border-2 border-primary bg-slate-50 text-primary hover:bg-primary hover:text-white px-12 h-20 font-semibold text-xl transition-all shadow-xl">
+                      <Button size="lg" variant="outline" className="rounded-3xl border-2 border-white/30 bg-white/10 backdrop-blur-md text-white hover:bg-white hover:text-primary px-12 h-20 font-black text-xl transition-all shadow-xl uppercase tracking-widest">
                         Visiter les boutiques
                       </Button>
                     </Link>

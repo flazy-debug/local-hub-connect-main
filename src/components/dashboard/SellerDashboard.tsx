@@ -40,7 +40,7 @@ import DashboardErrorBoundary from "@/components/dashboard/DashboardErrorBoundar
 
 const statusColors: Record<string, string> = {
   pending: "bg-slate-100 text-slate-400", paid: "bg-primary/10 text-primary",
-  preparing: "bg-accent/10 text-accent", shipped: "bg-slate-200 text-slate-500",
+  preparing: "bg-slate-50 text-slate-400", shipped: "bg-slate-200 text-slate-500",
   delivered: "bg-secondary/10 text-secondary", completed: "bg-secondary text-white",
 };
 const statusLabels: Record<string, string> = {
@@ -89,6 +89,13 @@ export function SellerDashboard() {
   const [pImages, setPImages] = useState<string[]>([]);
   const [pVideoUrl, setPVideoUrl] = useState<string | null>(null);
   const [pSupplierPrice, setPSupplierPrice] = useState("");
+  const [pTransactionType, setPTransactionType] = useState<"vente" | "location" | "service">("vente");
+  const [pYear, setPYear] = useState("");
+  const [pKm, setPKm] = useState("");
+  const [pFuel, setPFuel] = useState("essence");
+  const [pTransmission, setPTransmission] = useState("automatique");
+  const [pSurface, setPSurface] = useState("");
+  const [pRooms, setPRooms] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
   
@@ -216,6 +223,15 @@ export function SellerDashboard() {
         images: pImages.length > 0 ? pImages : ["/placeholder.svg"],
         video_url: pVideoUrl || null,
         supplier_price: sellerPlan === "PARTNER" ? parseInt(pSupplierPrice) : null,
+        transaction_type: pTransactionType,
+        specifications: {
+          year: pYear,
+          km: pKm,
+          fuel: pFuel,
+          transmission: pTransmission,
+          surface: pSurface,
+          rooms: pRooms,
+        },
         is_approved: sellerPlan !== "PARTNER",
       });
       if (error) throw error;
@@ -225,10 +241,34 @@ export function SellerDashboard() {
     finally { setSubmitting(false); }
   };
 
+  const handleCategoryChange = (val: string) => {
+    const restricted = ['immobilier', 'vehicules', 'services-professionnels', 'services'];
+    if ((restricted.includes(val) || val.toLowerCase().includes('service')) && !['PRO', 'PARTNER'].includes(sellerPlan || '')) {
+      toast({
+        title: "Compte Professionnel Requis 🔒",
+        description: "Seuls les membres PRO et PARTENAIRES peuvent publier dans l'Immobilier, l'Automobile et les Services.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setPCategory(val);
+    if (val.toLowerCase().includes('service')) {
+      setPTransactionType("service");
+      setPDelivery(false);
+    } else if (val === 'vehicules') {
+      setPTransactionType("vente");
+      setPDelivery(false);
+    } else if (val === 'immobilier') {
+      setPDelivery(false);
+    }
+  };
+
   const resetForm = () => {
     setPName(""); setPDesc(""); setPPrice(""); setPPromoPrice(""); setPCategory("");
     setPCondition("neuf"); setPStock("1"); setPNeighborhood("");
     setPPickup(true); setPDelivery(false); setPPickupAddr(""); setPImages([]); setPVideoUrl(null); setPSupplierPrice("");
+    setPTransactionType("vente"); setPYear(""); setPKm(""); setPFuel("essence");
+    setPTransmission("automatique"); setPSurface(""); setPRooms("");
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -313,13 +353,76 @@ export function SellerDashboard() {
                     <form onSubmit={handleAddProduct} className="space-y-4 mt-4">
                       <div className="space-y-2"><Label>Nom de l'article *</Label><Input placeholder="Ex: Basket Nike Air" value={pName} onChange={e => setPName(e.target.value)} required /></div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label>Prix (CFA) *</Label><Input type="number" placeholder="15000" value={pPrice} onChange={e => setPPrice(e.target.value)} required /></div>
-                        <div className="space-y-2"><Label>Stock *</Label><Input type="number" value={pStock} onChange={e => setPStock(e.target.value)} required min={0} /></div>
+                        <div className="space-y-2">
+                          <Label>{pCategory.toLowerCase().includes('service') ? "Tarif base / Déplacement (CFA) *" : "Prix (CFA) *"}</Label>
+                          <div className="relative">
+                            <Input type="number" placeholder="15000" value={pPrice} onChange={e => setPPrice(e.target.value)} required className="pr-16" />
+                            {pTransactionType === 'location' && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">/ MOIS</span>}
+                          </div>
+                        </div>
+                        {!(pCategory === 'immobilier' || pCategory === 'vehicules') && (
+                          <div className="space-y-2"><Label>Stock *</Label><Input type="number" value={pStock} onChange={e => setPStock(e.target.value)} required min={0} /></div>
+                        )}
                       </div>
+
+                      {/* Specialized Fields: Immobilier */}
+                      {pCategory === 'immobilier' && (
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 p-4 rounded-3xl bg-slate-50 border border-slate-100">
+                          <div className="space-y-2">
+                            <Label>Type de Transaction</Label>
+                            <div className="flex bg-white p-1 rounded-2xl gap-1">
+                              {['vente', 'location'].map(t => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => setPTransactionType(t as any)}
+                                  className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", pTransactionType === t ? "bg-primary text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}
+                                >
+                                  {t}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2"><Label>Surface (m²)</Label><Input type="number" placeholder="Ex: 300" value={pSurface} onChange={e => setPSurface(e.target.value)} /></div>
+                            <div className="space-y-2"><Label>Pièces</Label><Input type="number" placeholder="Ex: 4" value={pRooms} onChange={e => setPRooms(e.target.value)} /></div>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Specialized Fields: Automobile */}
+                      {pCategory === 'vehicules' && (
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-4 p-4 rounded-3xl bg-slate-50 border border-slate-100">
+                          <div className="space-y-2"><Label>Année</Label><Input type="number" placeholder="2024" value={pYear} onChange={e => setPYear(e.target.value)} /></div>
+                          <div className="space-y-2"><Label>Kilométrage (km)</Label><Input type="number" placeholder="15000" value={pKm} onChange={e => setPKm(e.target.value)} /></div>
+                          <div className="space-y-2">
+                            <Label>Carburant</Label>
+                            <Select value={pFuel} onValueChange={setPFuel}>
+                              <SelectTrigger className="rounded-2xl"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="essence">Essence</SelectItem>
+                                <SelectItem value="diesel">Diesel</SelectItem>
+                                <SelectItem value="hybride">Hybride</SelectItem>
+                                <SelectItem value="electrique">Électrique</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Transmission</Label>
+                            <Select value={pTransmission} onValueChange={setPTransmission}>
+                              <SelectTrigger className="rounded-2xl"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="automatique">Automatique</SelectItem>
+                                <SelectItem value="manuelle">Manuelle</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </motion.div>
+                      )}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Catégorie *</Label>
-                          <Select value={pCategory} onValueChange={setPCategory} required>
+                          <Select value={pCategory} onValueChange={handleCategoryChange} required>
                             <SelectTrigger className="rounded-3xl"><SelectValue placeholder="Choisir" /></SelectTrigger>
                             <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                           </Select>

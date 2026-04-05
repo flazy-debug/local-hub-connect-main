@@ -93,6 +93,8 @@ export default function ProductDetail() {
           videoUrl: (dbProduct as any).video_url || null,
           supplierPrice: (dbProduct as any).supplier_price || null,
           options: (dbProduct as any).options || null,
+          transaction_type: (dbProduct as any).transaction_type || "vente",
+          specifications: (dbProduct as any).specifications || {},
         };
         setProduct(mapped);
         setSellerWhatsapp(sellerProfile?.whatsapp_number || "");
@@ -144,6 +146,7 @@ export default function ProductDetail() {
     : product.price;
 
   const displayPrice = product.promoPrice || calculatedPrice;
+  const priceSuffix = product.transaction_type === 'location' ? "/ mois" : "";
 
   const handleOrder = async () => {
     if (!buyerName.trim() || !buyerPhone.trim() || !buyerNeighborhood) {
@@ -321,12 +324,19 @@ export default function ProductDetail() {
 
               {product.promoPrice ? (
                 <div className="flex items-end gap-6">
-                  <p className="font-display text-6xl font-black text-primary tracking-tighter leading-none">{formatCFA(product.promoPrice)}</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="font-display text-6xl font-black text-primary tracking-tighter leading-none">{formatCFA(product.promoPrice)}</p>
+                    {priceSuffix && <span className="text-xl font-bold text-slate-400 capitalize">{priceSuffix}</span>}
+                  </div>
                   <p className="text-2xl text-slate-300 font-bold line-through mb-1">{formatCFA(product.price)}</p>
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <p className="font-display text-6xl font-black text-primary tracking-tighter leading-none">{formatCFA(calculatedPrice)}</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="font-display text-6xl font-black text-primary tracking-tighter leading-none">{formatCFA(calculatedPrice)}</p>
+                    {priceSuffix && <span className="text-xl font-bold text-slate-400 capitalize">{priceSuffix}</span>}
+                  </div>
+                  {product.category.toLowerCase().includes('service') && <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Tarif de base / Déplacement</p>}
                   {isPartner && <p className="text-[10px] font-black text-primary/40 uppercase tracking-widest">Tarif Partenaire Privilégié</p>}
                 </div>
               )}
@@ -372,23 +382,35 @@ export default function ProductDetail() {
                       <>
                         <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
                           <span className="text-xl">🏠</span>
-                          <span className="text-xs font-black text-slate-900 uppercase">4 Chambres</span>
+                          <span className="text-xs font-black text-slate-900 uppercase">{product.specifications?.rooms || "—"} Pièces</span>
                         </div>
                         <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
                           <span className="text-xl">📐</span>
-                          <span className="text-xs font-black text-slate-900 uppercase">300 m²</span>
+                          <span className="text-xs font-black text-slate-900 uppercase">{product.specifications?.surface || "—"} m²</span>
                         </div>
                       </>
                     ) : product.category === "véhicules" || product.category === "vehicules" ? (
                       <>
                         <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
                           <span className="text-xl">🚗</span>
-                          <span className="text-xs font-black text-slate-900 uppercase">Essence</span>
+                          <span className="text-xs font-black text-slate-900 uppercase">{product.specifications?.fuel || "Essence"}</span>
                         </div>
                         <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
                           <span className="text-xl">🕹️</span>
-                          <span className="text-xs font-black text-slate-900 uppercase">Manuelle</span>
+                          <span className="text-xs font-black text-slate-900 uppercase capitalize">{product.specifications?.transmission || "Manuelle"}</span>
                         </div>
+                        {product.specifications?.km && (
+                          <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
+                            <span className="text-xl">🛣️</span>
+                            <span className="text-xs font-black text-slate-900 uppercase">{product.specifications.km} KM</span>
+                          </div>
+                        )}
+                        {product.specifications?.year && (
+                          <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
+                            <span className="text-xl">📅</span>
+                            <span className="text-xs font-black text-slate-900 uppercase">{product.specifications.year}</span>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <>
@@ -439,21 +461,30 @@ export default function ProductDetail() {
               {isListing ? (
                 <div className="space-y-6">
                   {sellerWhatsapp ? (
-                    <a
-                      href={generateWhatsAppLink(sellerWhatsapp, {
-                        id: "nouveau", 
-                        items: [{ name: product.name, quantity: 1, price: displayPrice }],
-                        total: displayPrice, 
-                        deliveryMethod, 
-                        neighborhood: product.neighborhood,
-                        buyerName: profile?.display_name || "", 
-                        buyerPhone: profile?.phone || "",
-                      })}
-                      target="_blank" rel="noopener noreferrer"
-                      className="flex w-full items-center justify-center gap-4 rounded-full bg-[#25D366] hover:bg-[#20bd5a] px-10 py-6 font-black text-white text-xl shadow-[0_20px_40px_rgba(37,211,102,0.2)] transition-all active:scale-95"
-                    >
-                      <MessageCircle className="h-7 w-7" /> Contact Vendeur
-                    </a>
+                    <div className="flex flex-col gap-3">
+                      <Button 
+                        size="lg"
+                        onClick={() => window.open(generateWhatsAppLink(sellerWhatsapp, { 
+                          id: product.name, 
+                          items: [{ name: product.name, quantity: 1, price: displayPrice }],
+                          total: displayPrice,
+                          deliveryMethod: "pickup",
+                          neighborhood: product.neighborhood || "",
+                          buyerName: profile?.display_name || "Client",
+                          buyerPhone: profile?.phone || ""
+                        }), "_blank")}
+                        className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white h-20 rounded-full font-black uppercase text-xl shadow-[0_20px_40px_rgba(37,211,102,0.2)] transition-all active:scale-95"
+                      >
+                        <MessageCircle className="mr-3 h-7 w-7" /> Contacter sur WhatsApp
+                      </Button>
+                      <Button 
+                        variant="ghost"
+                        onClick={() => window.location.href = `tel:${sellerWhatsapp}`} 
+                        className="w-full h-16 rounded-full font-black text-slate-900 uppercase text-xs tracking-[0.2em] hover:bg-slate-50"
+                      >
+                        Appeler le Vendeur
+                      </Button>
+                    </div>
                   ) : (
                     <Button size="lg" disabled className="w-full rounded-full h-20 font-black text-xl bg-slate-100 text-slate-400 border-none shadow-none">
                       Momentanément indisponible
@@ -465,9 +496,27 @@ export default function ProductDetail() {
                 </div>
               ) : !showOrderForm ? (
                 <div className="space-y-6">
-                  <Button size="lg" className="w-full h-20 bg-primary hover:bg-primary-dark rounded-full font-black text-xl shadow-xl transition-all" onClick={() => setShowOrderForm(true)}>
-                    Finaliser la Commande
-                  </Button>
+                  {product.category.toLowerCase().includes('service') ? (
+                    <Button 
+                      size="lg"
+                      onClick={() => window.open(generateWhatsAppLink(sellerWhatsapp, { 
+                        id: "DEVIS-" + product.name, 
+                        items: [{ name: product.name, quantity: 1, price: displayPrice }],
+                        total: displayPrice,
+                        deliveryMethod: "pickup",
+                        neighborhood: product.neighborhood || "",
+                        buyerName: profile?.display_name || "Client",
+                        buyerPhone: profile?.phone || ""
+                      }), "_blank")}
+                      className="w-full bg-primary hover:bg-primary/90 text-white h-20 rounded-full font-black uppercase text-xl shadow-2xl shadow-primary/20 transition-all hover:scale-[1.02]"
+                    >
+                      <MessageCircle className="mr-3 h-7 w-7" /> Demander un Devis (WhatsApp)
+                    </Button>
+                  ) : (
+                    <Button size="lg" className="w-full h-20 bg-primary hover:bg-primary-dark rounded-full font-black text-xl shadow-xl transition-all" onClick={() => setShowOrderForm(true)}>
+                      Finaliser la Commande
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleShare} className="w-full h-16 rounded-full border-2 border-slate-100 font-black text-xs uppercase tracking-widest gap-3">
                     <Share2 className="h-5 w-5" /> Partager l'offre
                   </Button>
