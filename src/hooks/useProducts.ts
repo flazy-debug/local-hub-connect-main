@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/lib/types";
 import { products as mockProducts } from "@/lib/mock-data";
+import { getProximityWeight } from "@/lib/delivery-logic";
+import { useAuth } from "@/lib/auth-context";
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const { userNeighborhood } = useAuth();
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -62,7 +65,24 @@ export function useProducts() {
           };
         });
 
-        setProducts(mapped);
+        // Apply proximity-aware sorting
+        const finalSorted = mapped.sort((a, b) => {
+          // 1. Boosted items first
+          if (a.isBoosted && !b.isBoosted) return -1;
+          if (!a.isBoosted && b.isBoosted) return 1;
+
+          // 2. Proximity (if user location is set)
+          if (userNeighborhood) {
+            const weightA = getProximityWeight(a.neighborhood || "Centre-Ville", userNeighborhood);
+            const weightB = getProximityWeight(b.neighborhood || "Centre-Ville", userNeighborhood);
+            if (weightA !== weightB) return weightA - weightB;
+          }
+
+          // 3. Newest first
+          return new Date(b.id.toString()).getTime() - new Date(a.id.toString()).getTime();
+        });
+
+        setProducts(finalSorted);
       } else {
         // Fallback to mock data if DB is empty
         setProducts(mockProducts);

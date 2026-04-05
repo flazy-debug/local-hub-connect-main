@@ -10,6 +10,8 @@ interface AuthState {
   isPartner: boolean;
   isAdmin: boolean;
   loading: boolean;
+  userNeighborhood: string | null;
+  setUserNeighborhood: (neighborhood: string | null) => void;
   signUp: (email: string, password: string, displayName: string, role: string, whatsappNumber?: string, plan?: string, shopName?: string, locationNeighborhood?: string) => Promise<void>;
   signIn: (identifier: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -30,7 +32,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSeller, setIsSeller] = useState(false);
   const [isPartner, setIsPartner] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userNeighborhood, setUserNeighborhoodState] = useState<string | null>(localStorage.getItem("epure_user_neighborhood"));
   const [loading, setLoading] = useState(true);
+
+  const setUserNeighborhood = (neighborhood: string | null) => {
+    if (neighborhood) {
+      localStorage.setItem("epure_user_neighborhood", neighborhood);
+    } else {
+      localStorage.removeItem("epure_user_neighborhood");
+    }
+    setUserNeighborhoodState(neighborhood);
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -38,7 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("*")
       .eq("user_id", userId)
       .single();
-    setProfile(data);
+    if (data) {
+      setProfile(data);
+      if (data.neighborhood && !userNeighborhood) {
+        setUserNeighborhood(data.neighborhood);
+      }
+    }
   };
 
   const checkRoles = async (userId: string) => {
@@ -150,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, isSeller, isPartner, isAdmin, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, isSeller, isPartner, isAdmin, userNeighborhood, setUserNeighborhood, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

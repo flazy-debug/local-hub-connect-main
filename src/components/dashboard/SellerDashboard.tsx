@@ -5,12 +5,15 @@ import {
   Package, ShoppingCart, TrendingUp, Plus, Trash2, Pencil, Megaphone, 
   Bell, Wallet, Tag, Camera, ShieldCheck, Store, Copy, Facebook, 
   Instagram, Link as LinkIcon, MessageSquare, Clock, ExternalLink,
-  AlertTriangle, ArrowUpRight, Calendar
+  AlertTriangle, ArrowUpRight, Calendar as CalendarIcon, ChevronDown
 } from "lucide-react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, AreaChart, Area, Legend
 } from "recharts";
+import { format, subDays, startOfDay, endOfDay, isWithinInterval, eachDayOfInterval, isSameDay } from "date-fns";
+import { fr } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
 import ImageUpload from "@/components/ImageUpload";
 import VideoUpload from "@/components/VideoUpload";
 import EditProductDialog from "@/components/dashboard/EditProductDialog";
@@ -22,6 +25,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -56,6 +61,10 @@ export function SellerDashboard() {
   const [partnerMarkup, setPartnerMarkup] = useState(profile?.partner_markup_percent || 0);
   const [loadingData, setLoadingData] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 7),
+    to: new Date(),
+  });
   const [chartTimeframe, setChartTimeframe] = useState("7d");
 
   const { tab: queryTab } = Object.fromEntries(new URLSearchParams(window.location.search));
@@ -142,44 +151,55 @@ export function SellerDashboard() {
     }
   };
 
-  // Helper for Chart Data
-  const chartData = useMemo(() => {
-    if (!transactions || transactions.length === 0) {
-      // Données de factices pour un nouveau dashboard
-      const now = new Date();
-      return Array.from({ length: 7 }).map((_, i) => {
-        const d = new Date();
-        d.setDate(now.getDate() - (6 - i));
-        return {
-          date: d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
-          brut: Math.floor(Math.random() * 15000) + 5000,
-          net: Math.floor(Math.random() * 12000) + 4000,
-          isMock: true
-        };
-      });
+  // Analytics Logic - Current vs Previous
+  const analyticsData = useMemo(() => {
+    if (!transactions || transactions.length === 0 || !dateRange?.from || !dateRange?.to) {
+      return { chart: [], totalNet: 0, trend: 0 };
     }
-    
-    const days: Record<string, { date: string, brut: number, net: number, isMock: boolean }> = {};
-    const now = new Date();
-    const timeframeDays = chartTimeframe === "7d" ? 7 : chartTimeframe === "30d" ? 30 : 365;
 
-    for (let i = timeframeDays - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(now.getDate() - i);
-      const key = d.toISOString().split('T')[0];
-      days[key] = { date: d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }), brut: 0, net: 0, isMock: false };
-    }
+    const from = startOfDay(dateRange.from);
+    const to = endOfDay(dateRange.to);
+    
+    // Previous period for trend calculation
+    const durationMs = to.getTime() - from.getTime();
+    const prevFrom = new Date(from.getTime() - durationMs - 1);
+    const prevTo = new Date(from.getTime() - 1);
+
+    let currentNet = 0;
+    let prevNet = 0;
 
     transactions.forEach(t => {
-      const key = new Date(t.created_at).toISOString().split('T')[0];
-      if (days[key]) {
-        days[key].brut += t.amount_total || 0;
-        days[key].net += t.seller_payout || 0;
+      const txDate = new Date(t.created_at);
+      if (isWithinInterval(txDate, { start: from, end: to })) {
+        currentNet += t.seller_payout || 0;
+      } else if (isWithinInterval(txDate, { start: prevFrom, end: prevTo })) {
+        prevNet += t.seller_payout || 0;
       }
     });
 
-    return Object.values(days);
-  }, [transactions, chartTimeframe]);
+    const trend = prevNet === 0 ? 100 : Math.round(((currentNet - prevNet) / prevNet) * 100);
+
+    // Chart Data
+    const days = eachDayOfInterval({ start: from, end: to });
+    const chart = days.map(day => {
+      const dayNet = transactions
+        .filter(t => isSameDay(new Date(t.created_at), day))
+        .reduce((sum, t) => sum + (t.seller_payout || 0), 0);
+      const dayBrut = transactions
+        .filter(t => isSameDay(new Date(t.created_at), day))
+        .reduce((sum, t) => sum + (t.amount_total || 0), 0);
+
+      return {
+        date: format(day, "dd MMM", { locale: fr }),
+        net: dayNet,
+        brut: dayBrut,
+      };
+    });
+
+    return { chart, totalNet: currentNet, trend };
+  }, [transactions, dateRange]);
+
+  const { chart: filteredChartData, totalNet: periodTotalNet, trend: periodTrend } = analyticsData;
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -342,69 +362,140 @@ export function SellerDashboard() {
         {/* Analytics Chart */}
         <Card className="border-none shadow-premium rounded-[3rem] bg-white overflow-hidden relative">
           <div className="absolute top-0 left-0 h-32 w-32 bg-primary/5 rounded-full -ml-16 -mt-16 blur-2xl" />
-          <CardHeader className="flex flex-col md:flex-row md:items-center justify-between pb-8 pt-10 px-10 gap-6">
-            <div className="space-y-1">
-              <h3 className="text-sm font-black text-primary uppercase tracking-[0.2em] mb-2">Performance du Shop</h3>
-              <CardTitle className="text-4xl font-display font-black text-slate-900 tracking-tighter">Votre Business en Direct</CardTitle>
-              <CardDescription className="text-slate-400 font-medium italic">Visualisation de vos revenus et de l'activité réelle</CardDescription>
+            <div className="flex flex-col md:flex-row md:items-end justify-between pb-8 pt-10 px-10 gap-8">
+              <div className="space-y-4 flex-1">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-primary uppercase tracking-[0.2em] mb-2">Performance du Shop</h3>
+                  <CardTitle className="text-4xl font-display font-black text-slate-900 tracking-tighter">Votre Business en Direct</CardTitle>
+                  <CardDescription className="text-slate-400 font-medium italic">Analyse précise de vos profits sur mesure</CardDescription>
+                </div>
+                
+                {/* KPI Highlight - GAIN NET */}
+                <div className="flex items-center gap-6 pt-4">
+                  <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-premium p-8 flex flex-col gap-1 min-w-[280px]">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Gain Net de la Période</span>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-4xl font-display font-black text-primary tracking-tighter">
+                        {formatCFA(periodTotalNet)}
+                      </span>
+                      {periodTrend !== 0 && (
+                        <div className={cn("flex items-center gap-1 text-xs font-black px-3 py-1 rounded-full", periodTrend > 0 ? "bg-secondary/10 text-secondary" : "bg-destructive/10 text-destructive")}>
+                          {periodTrend > 0 ? "↑" : "↓"} {Math.abs(periodTrend)}%
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Date Range Picker */}
+              <div className="flex flex-col gap-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Filtrer par date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant={"outline"}
+                      className={cn(
+                        "w-[300px] justify-start text-left font-black text-[11px] uppercase tracking-widest h-16 rounded-full border-none bg-slate-50 shadow-inner px-8 transition-all hover:bg-slate-100",
+                        !dateRange && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, "dd LLL y", { locale: fr })} -{" "}
+                            {format(dateRange.to, "dd LLL y", { locale: fr })}
+                          </>
+                        ) : (
+                          format(dateRange.from, "dd LLL y", { locale: fr })
+                        )
+                      ) : (
+                        <span>Sélectionner une plage</span>
+                      )}
+                      <ChevronDown className="ml-auto h-4 w-4 opacity-40" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-[2.5rem] shadow-3xl border-none" align="end">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={setDateRange}
+                      numberOfMonths={2}
+                      locale={fr}
+                      className="p-6"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-            <Select value={chartTimeframe} onValueChange={setChartTimeframe}>
-              <SelectTrigger className="w-[180px] rounded-full bg-slate-50 border-none h-14 font-black text-[10px] uppercase tracking-widest px-6 shadow-inner transition-all hover:bg-slate-100">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-[2rem] border-none shadow-3xl p-2">
-                <SelectItem value="7d" className="rounded-xl font-bold">7 derniers jours</SelectItem>
-                <SelectItem value="30d" className="rounded-xl font-bold">30 derniers jours</SelectItem>
-                <SelectItem value="365d" className="rounded-xl font-bold">Cette année</SelectItem>
-              </SelectContent>
-            </Select>
-          </CardHeader>
           <CardContent className="pb-10 pt-4 px-4 md:px-10">
             <div className="h-[400px] w-full relative">
               <ResponsiveContainer width="100%" height={400}>
-                <AreaChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorBrut" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6D28D9" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#6D28D9" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="10 10" vertical={false} stroke="#F8FAFC" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }} dy={15} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: 900 }} tickFormatter={(val) => `${val/1000}k`} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', fontWeight: '900', padding: '20px', background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}
-                    itemStyle={{ color: '#6D28D9' }}
-                    labelStyle={{ color: '#94A3B8', marginBottom: '8px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
-                    formatter={(value: any) => [formatCFA(value), ""]}
-                  />
-                  <Area 
-                    type="natural" 
-                    dataKey="brut" 
-                    name="Vente Brute"
-                    stroke="#6D28D9" 
-                    strokeWidth={5}
-                    fillOpacity={1} 
-                    fill="url(#colorBrut)" 
-                    animationDuration={2000}
-                  />
-                  <Area 
-                    type="natural" 
-                    dataKey="net" 
-                    name="Gain Net"
-                    stroke="#7C3AED" 
-                    strokeWidth={2}
-                    strokeDasharray="8 8"
-                    fill="transparent" 
-                  />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ paddingTop: '40px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.6 }} />
-                </AreaChart>
+                  <AreaChart data={filteredChartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6D28D9" stopOpacity={0.25}/>
+                        <stop offset="95%" stopColor="#6D28D9" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorBrut" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#94A3B8" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#94A3B8" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="10 10" vertical={false} stroke="#F1F5F9" />
+                    <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 11, fill: '#94A3B8', fontWeight: 900, letterSpacing: '0.05em' }} 
+                      dy={15} 
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 11, fill: '#94A3B8', fontWeight: 900 }} 
+                      tickFormatter={(val) => val === 0 ? "0" : `${val/1000}k`} 
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', fontWeight: '900', padding: '20px', background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(10px)' }}
+                      itemStyle={{ fontSize: '12px', fontWeight: '900' }}
+                      labelStyle={{ color: '#94A3B8', marginBottom: '8px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                      formatter={(value: any) => [formatCFA(value), ""]}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="brut" 
+                      name="Chiffre d'Affaires"
+                      stroke="#94A3B8" 
+                      strokeWidth={2}
+                      strokeOpacity={0.3}
+                      fillOpacity={1} 
+                      fill="url(#colorBrut)" 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="net" 
+                      name="Gain Net"
+                      stroke="#6D28D9" 
+                      strokeWidth={6}
+                      fillOpacity={1} 
+                      fill="url(#colorNet)" 
+                      animationDuration={2000}
+                    />
+                    <Legend 
+                      verticalAlign="top" 
+                      align="right" 
+                      iconType="circle" 
+                      iconSize={6} 
+                      wrapperStyle={{ paddingBottom: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.5 }} 
+                    />
+                  </AreaChart>
               </ResponsiveContainer>
-              {chartData[0]?.isMock && (
-                <div className="absolute inset-x-0 bottom-1/2 flex items-center justify-center pointer-events-none">
-                  <p className="bg-white/80 backdrop-blur-md px-6 py-2 rounded-full text-[10px] text-slate-300 font-black uppercase tracking-[0.3em] shadow-sm">Démonstration</p>
-                </div>
-              )}
+
             </div>
           </CardContent>
         </Card>
@@ -498,7 +589,7 @@ export function SellerDashboard() {
                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Client</p>
                                   <p className="text-xl font-display font-black text-slate-900 leading-none">{order.customer_name}</p>
                                   <p className="text-xs text-slate-500 font-medium flex items-center gap-2 mt-2">
-                                    <Calendar className="h-3 w-3" /> {new Date(order.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    <CalendarIcon className="h-3 w-3" /> {new Date(order.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                   </p>
                                 </div>
                               </div>

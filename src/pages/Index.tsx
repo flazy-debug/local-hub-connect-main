@@ -206,12 +206,12 @@ const Index = () => {
                   </p>
                   <div className="pt-10 flex flex-wrap justify-center gap-6">
                     <Link to="/vendeur/login">
-                      <Button size="lg" className="rounded-full bg-white text-primary hover:bg-slate-50 px-12 h-20 font-black text-xl shadow-2xl transition-all hover:scale-105 active:scale-95">
+                      <Button size="lg" className="rounded-3xl bg-white text-primary hover:bg-slate-50 px-12 h-20 font-black text-xl shadow-2xl transition-all hover:scale-105 active:scale-95">
                         Ouvrir ma boutique
                       </Button>
                     </Link>
                     <Link to="/boutiques">
-                      <Button size="lg" variant="outline" className="rounded-full border-2 border-white/20 text-white hover:bg-white/10 px-12 h-20 font-black text-xl backdrop-blur-md">
+                      <Button size="lg" variant="outline" className="rounded-3xl border-2 border-primary bg-slate-50 text-primary hover:bg-primary hover:text-white px-12 h-20 font-semibold text-xl transition-all shadow-xl">
                         Visiter les boutiques
                       </Button>
                     </Link>

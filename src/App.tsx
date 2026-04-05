@@ -30,6 +30,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Help from "./pages/Help";
 import StickyWhatsApp from "@/components/StickyWhatsApp";
 import BoostExpirationManager from "@/components/BoostExpirationManager";
+import { StickyCheckout } from "@/components/cart/StickyCheckout";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
               <AnimatedRoutes />
             </main>
             <StickyWhatsApp />
+            <StickyCheckout />
             <div className="hidden md:block">
               <Footer />
             </div>

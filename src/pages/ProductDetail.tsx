@@ -1,58 +1,66 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { products as mockProducts, formatCFA, shops as mockShops, generateWhatsAppLink, neighborhoods } from "@/lib/mock-data";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, MapPin, ShoppingBag, Truck, ArrowLeft, MessageCircle, Store, CheckCircle, Share2, ShieldCheck, Package } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
-import WishlistButton from "@/components/WishlistButton";
-import FollowButton from "@/components/FollowButton";
-import VerificationBadge from "@/components/VerificationBadge";
 import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Product, Review } from "@/lib/types";
+import { NeighborhoodSelector } from "@/components/ui/NeighborhoodSelector";
+import { RestaurantOptions } from "@/components/product/RestaurantOptions";
+import { getDeliveryFee, getEstimatedDeliveryTime, isListingCategory, isDirectCheckout } from "@/lib/delivery-logic";
+import { useCart } from "@/lib/cart-store";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Clock, ChefHat, Flame, Info, Star, MapPin, 
+  ShoppingBag, Truck, ArrowLeft, Share2, 
+  MessageCircle, Store, ShieldCheck, Package 
+} from "lucide-react";
+import { formatCFA, generateWhatsAppLink } from "@/lib/utils";
+import { products as mockProducts } from "@/lib/mock-data";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import WishlistButton from "@/components/WishlistButton";
+import VerificationBadge from "@/components/VerificationBadge";
+import FollowButton from "@/components/FollowButton";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [product, setProduct] = useState<(Product & { promoPrice?: number }) | null>(null);
+  const [product, setProduct] = useState<(Product & { promoPrice?: number, supplierPrice?: number, videoUrl?: string, isBoosted?: boolean }) | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [sellerWhatsapp, setSellerWhatsapp] = useState("");
   const [sellerSubscription, setSellerSubscription] = useState("STANDARD");
   const [partnerMarkup, setPartnerMarkup] = useState(0);
-  const [isExemptFromCommission, setIsExemptFromCommission] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">("pickup");
-  const [deliveryZone, setDeliveryZone] = useState("Zone A");
-  
-  // V1.1 Listing logic
-  const isListingCategory = ["immobilier", "vehicules", "emploi-services", "auto", "location-voiture"].includes(product?.category || "");
-  const isDirectCheckout = !isListingCategory;
-
-  // Order form
-  const [showOrderForm, setShowOrderForm] = useState(false);
+  const [buyerNeighborhood, setBuyerNeighborhood] = useState("");
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
-  const [buyerNeighborhood, setBuyerNeighborhood] = useState("");
+  const [showOrderForm, setShowOrderForm] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { addItem } = useCart();
+
+  const isRestaurant = product?.category === "restauration";
+  const deliveryFee = buyerNeighborhood ? getDeliveryFee(buyerNeighborhood) : 0;
+  const isListing = product ? isListingCategory(product.category) : false;
+  const isDirect = product ? isDirectCheckout(product.category) : false;
 
   useEffect(() => {
     if (profile) {
       setBuyerName(profile.display_name || "");
       setBuyerPhone(profile.phone || "");
-      setBuyerNeighborhood(profile.neighborhood || "");
+      if (profile.neighborhood) setBuyerNeighborhood(profile.neighborhood);
     }
   }, [profile]);
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const { data: dbProduct } = await supabase
+      if (!id) return;
+      const { data: dbProduct, error: prodError } = await supabase
         .from("products").select("*").eq("id", id).single();
 
       if (dbProduct) {
@@ -61,31 +69,36 @@ export default function ProductDetail() {
           .select("display_name, shop_name, whatsapp_number, verification_status, subscription_type, partner_markup_percent")
           .eq("user_id", dbProduct.seller_id).single();
 
-        const mapped: Product & { promoPrice?: number } = {
-          id: dbProduct.id, name: dbProduct.name, description: dbProduct.description || "",
+        const mapped: Product & { promoPrice?: number, supplierPrice?: number, videoUrl?: string, isBoosted?: boolean } = {
+          id: dbProduct.id, 
+          name: dbProduct.name, 
+          description: dbProduct.description || "",
           price: dbProduct.price,
           images: dbProduct.images?.length > 0 ? dbProduct.images : ["/placeholder.svg"],
           category: dbProduct.category,
           condition: dbProduct.condition as "neuf" | "occasion",
-          stock: dbProduct.stock, sellerId: dbProduct.seller_id,
+          stock: dbProduct.stock, 
+          sellerId: dbProduct.seller_id,
           sellerName: sellerProfile?.shop_name || sellerProfile?.display_name || "Vendeur",
           sellerType: sellerProfile?.shop_name ? "boutique" : "particulier",
-          neighborhood: dbProduct.neighborhood, rating: 0, reviewCount: 0,
+          neighborhood: dbProduct.neighborhood, 
+          rating: 0, 
+          reviewCount: 0,
           pickupAvailable: dbProduct.pickup_available,
           deliveryAvailable: dbProduct.delivery_available,
           pickupAddress: dbProduct.pickup_address || undefined,
           sellerVerification: (sellerProfile as any)?.verification_status || "none",
-           promoPrice: (dbProduct as any).promo_price || undefined,
-           isBoosted: (dbProduct as any).is_boosted || false,
-           videoUrl: (dbProduct as any).video_url || null,
-           supplierPrice: (dbProduct as any).supplier_price || null,
-         };
-         setProduct(mapped);
-         setSellerWhatsapp(sellerProfile?.whatsapp_number || "");
-         const sub = (sellerProfile as any)?.subscription_type || "STANDARD";
-         setSellerSubscription(sub);
-         setIsExemptFromCommission(sub === "monthly_flat" || sub === "PRO" || sub === "partner" || sub === "PARTNER");
-         setPartnerMarkup((sellerProfile as any)?.partner_markup_percent || 0);
+          promoPrice: (dbProduct as any).promo_price || undefined,
+          isBoosted: (dbProduct as any).is_boosted || false,
+          videoUrl: (dbProduct as any).video_url || null,
+          supplierPrice: (dbProduct as any).supplier_price || null,
+          options: (dbProduct as any).options || null,
+        };
+        setProduct(mapped);
+        setSellerWhatsapp(sellerProfile?.whatsapp_number || "");
+        const sub = (sellerProfile as any)?.subscription_type || "STANDARD";
+        setSellerSubscription(sub);
+        setPartnerMarkup((sellerProfile as any)?.partner_markup_percent || 0);
         setDeliveryMethod(mapped.pickupAvailable ? "pickup" : "delivery");
 
         const { data: dbReviews } = await supabase
@@ -98,11 +111,13 @@ export default function ProductDetail() {
         }
       } else {
         const mockProd = mockProducts.find(p => p.id === id);
-        if (mockProd) { setProduct(mockProd); setDeliveryMethod(mockProd.pickupAvailable ? "pickup" : "delivery"); }
+        if (mockProd) { 
+          setProduct(mockProd); 
+          setDeliveryMethod(mockProd.pickupAvailable ? "pickup" : "delivery"); 
+        }
       }
       setLoading(false);
       
-      // Special Redirection for Voiket (Car Rental)
       if (dbProduct && dbProduct.category === "location-voiture") {
         window.open("https://voiket.com", "_blank");
         navigate("/tous-les-produits");
@@ -119,12 +134,13 @@ export default function ProductDetail() {
     </div>
   );
 
-  const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : product.rating.toString();
+  const avgRating = reviews.length > 0 
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) 
+    : (product.rating || 0).toString();
   
-  // Calculate final price for PARTNER
   const isPartner = sellerSubscription === "PARTNER" || sellerSubscription === "partner";
-  const calculatedPrice = (isPartner && (product as any).supplierPrice)
-    ? Math.round((product as any).supplierPrice * (1 + partnerMarkup / 100))
+  const calculatedPrice = (isPartner && product.supplierPrice)
+    ? Math.round(product.supplierPrice * (1 + partnerMarkup / 100))
     : product.price;
 
   const displayPrice = product.promoPrice || calculatedPrice;
@@ -133,35 +149,57 @@ export default function ProductDetail() {
     if (!buyerName.trim() || !buyerPhone.trim() || !buyerNeighborhood) {
       toast.error("Veuillez remplir tous les champs obligatoires."); return;
     }
+    
+    if (isRestaurant && product.options?.variants) {
+      const missing = (product.options as any).variants.filter((v: any) => v.required && !selectedOptions?.variants?.[v.name]);
+      if (missing.length > 0) {
+        toast.error(`Veuillez choisir : ${missing.map((m: any) => m.name).join(", ")}`);
+        return;
+      }
+    }
+
     if (!user) { toast.error("Veuillez vous connecter."); navigate("/auth"); return; }
 
     setIsProcessing(true);
     try {
-      // 4% Reseau + 10% Commission (sauf PRO et PARTNER)
-      const isExempt = sellerSubscription === "monthly_flat" || sellerSubscription === "partner" || sellerSubscription === "PRO" || sellerSubscription === "PARTNER";
+      const isExempt = ["monthly_flat", "partner", "PRO", "PARTNER"].includes(sellerSubscription.toUpperCase());
       const commissionRate = isExempt ? 0 : 0.10;
       const GATEWAY_FEE_RATE = 0.04;
+      const dFee = deliveryMethod === "delivery" ? deliveryFee : 0;
       
-      const zoneFees: Record<string, number> = { "Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500 };
-      const dFee = deliveryMethod === "delivery" ? (zoneFees[deliveryZone] || 0) : 0;
-      
-      const grandTotal = displayPrice + dFee;
-      const networkFee = Math.round(displayPrice * GATEWAY_FEE_RATE);
-      const platformComm = Math.round(displayPrice * commissionRate);
+      let finalItemPrice = displayPrice;
+      if (selectedOptions?.extras && product.options?.extras) {
+        const extraPrices = (product.options as any).extras
+          .filter((e: any) => selectedOptions.extras.includes(e.name))
+          .reduce((sum: number, e: any) => sum + e.price, 0);
+        finalItemPrice += extraPrices;
+      }
+
+      const grandTotal = finalItemPrice + dFee;
+      const networkFee = Math.round(finalItemPrice * GATEWAY_FEE_RATE);
+      const platformComm = Math.round(finalItemPrice * commissionRate);
       const totalCommission = networkFee + platformComm;
-      const sellerPayout = displayPrice - totalCommission;
+      const sellerPayout = finalItemPrice - totalCommission;
 
       const { data: orderData, error: orderError } = await supabase
         .from("orders").insert({
           buyer_id: user.id, seller_id: product.sellerId,
-          items: [{ product_id: product.id, name: product.name, quantity: 1, price: displayPrice }],
-          total: grandTotal, delivery_method: deliveryMethod,
-          buyer_name: buyerName, buyer_phone: buyerPhone,
+          items: [{ 
+            product_id: product.id, 
+            name: product.name, 
+            quantity: 1, 
+            price: finalItemPrice,
+            options: selectedOptions 
+          }],
+          total: grandTotal, 
+          delivery_method: deliveryMethod,
+          buyer_name: buyerName, 
+          buyer_phone: buyerPhone,
           buyer_neighborhood: buyerNeighborhood, 
-          delivery_zone: deliveryZone,
           delivery_fee: dFee,
           status: "paid",
         }).select().single();
+
       if (orderError) throw orderError;
 
       await supabase.from("transactions").insert({
@@ -175,11 +213,20 @@ export default function ProductDetail() {
         status: "escrow",
       });
 
-      // WhatsApp notification
       if (sellerWhatsapp) {
         const link = generateWhatsAppLink(sellerWhatsapp, {
-          id: (orderData as any).order_number, items: [{ name: product.name, quantity: 1, price: displayPrice }],
-          total: grandTotal, deliveryMethod, neighborhood: buyerNeighborhood, buyerName, buyerPhone,
+          id: (orderData as any).order_number, 
+          items: [{ 
+            name: product.name, 
+            quantity: 1, 
+            price: finalItemPrice,
+            options: selectedOptions 
+          }],
+          total: grandTotal, 
+          deliveryMethod, 
+          neighborhood: buyerNeighborhood, 
+          buyerName, 
+          buyerPhone,
         });
         window.open(link, "_blank");
       }
@@ -198,8 +245,8 @@ export default function ProductDetail() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: product?.name || "Epuremarket",
-          text: `Découvrez ${product?.name} sur Epuremarket !`,
+          title: product.name,
+          text: `Découvrez ${product.name} sur Epuremarket !`,
           url: window.location.href,
         });
       } catch (err) { console.log("Error sharing", err); }
@@ -217,7 +264,7 @@ export default function ProductDetail() {
         </Link>
 
         <div className="grid gap-16 lg:grid-cols-12">
-          {/* Images Section - Asymmetric Layout */}
+          {/* Images Section */}
           <div className="lg:col-span-7 space-y-8">
             <div className="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-[2.5rem] bg-white shadow-[0_32px_64px_rgba(20,27,43,0.06)] group">
                {product.isBoosted && (
@@ -228,14 +275,9 @@ export default function ProductDetail() {
                <div className="absolute top-6 right-6 z-20 scale-125">
                  <WishlistButton productId={product.id} />
                </div>
-               <img 
-                 src={product.images[0]} 
-                 alt={product.name} 
-                 className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-               />
+               <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105" />
             </div>
 
-            {/* Thumbnail Gallery & Video */}
             <div className="grid grid-cols-4 gap-4">
               {product.images.slice(0, 4).map((img, i) => (
                 <div key={i} className="aspect-square overflow-hidden rounded-3xl cursor-pointer hover:ring-2 ring-primary ring-offset-4 transition-all bg-white shadow-sm">
@@ -244,15 +286,9 @@ export default function ProductDetail() {
               ))}
             </div>
             
-            {/* Video Support - Editorial Integration */}
-            {(product as any).videoUrl && (
+            {product.videoUrl && (
               <div className="overflow-hidden rounded-[2rem] bg-white shadow-lg relative group">
-                <video 
-                  src={(product as any).videoUrl} 
-                  controls 
-                  className="aspect-video w-full object-cover"
-                  poster={product.images[0]}
-                />
+                <video src={product.videoUrl} controls className="aspect-video w-full object-cover" poster={product.images[0]} />
                 <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white text-[9px] font-black uppercase tracking-widest">
                   🎥 Vidéo Produit
                 </div>
@@ -260,7 +296,6 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Info Section - Editorial Panel */}
           <div className="lg:col-span-5 space-y-10">
             <div className="space-y-6">
               <div className="flex flex-wrap items-center gap-3">
@@ -291,99 +326,153 @@ export default function ProductDetail() {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <p className="font-display text-6xl font-black text-primary tracking-tighter leading-none">
-                    {formatCFA(calculatedPrice)}
-                  </p>
+                  <p className="font-display text-6xl font-black text-primary tracking-tighter leading-none">{formatCFA(calculatedPrice)}</p>
                   {isPartner && <p className="text-[10px] font-black text-primary/40 uppercase tracking-widest">Tarif Partenaire Privilégié</p>}
+                </div>
+              )}
+
+              {isRestaurant && (
+                <div className="flex flex-wrap gap-4 py-4">
+                  <div className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 px-5 py-2.5 rounded-2xl shadow-sm">
+                    <Clock className="h-5 w-5 text-secondary animate-pulse" />
+                    <span className="text-sm font-black text-secondary uppercase tracking-tight">Prêt en 20-35 min</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-accent border border-accent/20 px-5 py-2.5 rounded-2xl shadow-lg shadow-accent/20">
+                    <Flame className="h-5 w-5 text-white" />
+                    <span className="text-sm font-black text-white uppercase tracking-tight">Coup de ❤️ Populaire</span>
+                  </div>
                 </div>
               )}
 
               <p className="text-slate-500 font-medium leading-relaxed text-lg pt-4 border-t border-slate-50">{product.description}</p>
             </div>
 
-            {/* V1.1 Specifications - Clean UI */}
-            {isListingCategory && (
-              <div className="grid grid-cols-2 gap-6 pb-4">
-                <div className="p-6 rounded-[2rem] bg-white shadow-sm space-y-2 group hover:bg-primary transition-colors duration-500">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white/60">Emplacement</span>
-                  <p className="text-lg font-black text-slate-900 group-hover:text-white">{product.neighborhood}</p>
+            {isRestaurant && product.options && (
+              <RestaurantOptions options={product.options as any} onUpdate={setSelectedOptions} className="pt-4" />
+            )}
+
+            {isListing && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-6 pb-4">
+                  <div className="p-6 rounded-[2rem] bg-white shadow-sm space-y-2 group hover:bg-primary transition-colors duration-500">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white/60">Emplacement</span>
+                    <p className="text-lg font-black text-slate-900 group-hover:text-white">{product.neighborhood}</p>
+                  </div>
+                  <div className="p-6 rounded-[2rem] bg-white shadow-sm space-y-2 group group-hover:bg-primary transition-colors duration-500">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white/60">Rubrique</span>
+                    <p className="text-lg font-black text-slate-900 uppercase group-hover:text-white">{product.category}</p>
+                  </div>
                 </div>
-                <div className="p-6 rounded-[2rem] bg-white shadow-sm space-y-2 group hover:bg-primary transition-colors duration-500">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white/60">Rubrique</span>
-                  <p className="text-lg font-black text-slate-900 uppercase group-hover:text-white">{product.category}</p>
+
+                {/* Caractéristiques Section */}
+                <div className="p-8 rounded-[2.5rem] bg-slate-50/50 border border-slate-100 space-y-6">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Caractéristiques</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {product.category === "immobilier" ? (
+                      <>
+                        <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
+                          <span className="text-xl">🏠</span>
+                          <span className="text-xs font-black text-slate-900 uppercase">4 Chambres</span>
+                        </div>
+                        <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
+                          <span className="text-xl">📐</span>
+                          <span className="text-xs font-black text-slate-900 uppercase">300 m²</span>
+                        </div>
+                      </>
+                    ) : product.category === "véhicules" || product.category === "vehicules" ? (
+                      <>
+                        <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
+                          <span className="text-xl">🚗</span>
+                          <span className="text-xs font-black text-slate-900 uppercase">Essence</span>
+                        </div>
+                        <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
+                          <span className="text-xl">🕹️</span>
+                          <span className="text-xs font-black text-slate-900 uppercase">Manuelle</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
+                          <ShieldCheck className="h-5 w-5 text-primary/40" />
+                          <span className="text-xs font-black text-slate-900 uppercase">Vérifié</span>
+                        </div>
+                        <div className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm">
+                          <Package className="h-5 w-5 text-primary/40" />
+                          <span className="text-xs font-black text-slate-900 uppercase">Premium</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Order Interface */}
-            {isDirectCheckout && !showOrderForm && (
+            {isDirect && !showOrderForm && (
               <div className="space-y-6">
-                <div className="space-y-3">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Options de Récupération</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    {product.pickupAvailable && (
-                      <button onClick={() => setDeliveryMethod("pickup")}
-                        className={`flex flex-col items-start gap-3 rounded-[2rem] p-6 text-left transition-all duration-500 ${deliveryMethod === "pickup" ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-white text-slate-500 shadow-sm hover:shadow-md"}`}>
-                        <ShoppingBag className={`h-6 w-6 ${deliveryMethod === "pickup" ? "text-white" : "text-primary"}`} />
-                        <div>
-                          <p className="font-black text-sm uppercase tracking-tight">Retrait Boutique</p>
-                          {product.pickupAddress && <p className="text-[10px] font-bold opacity-60 mt-1 uppercase tracking-widest">{product.pickupAddress}</p>}
-                        </div>
-                      </button>
-                    )}
-                    {product.deliveryAvailable && (
-                      <button onClick={() => setDeliveryMethod("delivery")}
-                        className={`flex flex-col items-start gap-3 rounded-[2rem] p-6 text-left transition-all duration-500 ${deliveryMethod === "delivery" ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-white text-slate-500 shadow-sm hover:shadow-md"}`}>
-                        <Truck className={`h-6 w-6 ${deliveryMethod === "delivery" ? "text-white" : "text-primary"}`} />
-                        <div>
-                          <p className="font-black text-sm uppercase tracking-tight">Livraison Rapide</p>
-                          <p className="text-[10px] font-bold opacity-60 mt-1 uppercase tracking-widest">Lomé & Périphérie</p>
-                        </div>
-                      </button>
-                    )}
-                  </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Options de Récupération</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {product.pickupAvailable && (
+                    <button onClick={() => setDeliveryMethod("pickup")}
+                      className={`flex flex-col items-start gap-3 rounded-[2rem] p-6 text-left transition-all duration-500 ${deliveryMethod === "pickup" ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-white text-slate-500 shadow-sm hover:shadow-md"}`}>
+                      <ShoppingBag className={`h-6 w-6 ${deliveryMethod === "pickup" ? "text-white" : "text-primary"}`} />
+                      <div>
+                        <p className="font-black text-sm uppercase tracking-tight">Retrait Boutique</p>
+                        {product.pickupAddress && <p className="text-[10px] font-bold opacity-60 mt-1 uppercase tracking-widest">{product.pickupAddress}</p>}
+                      </div>
+                    </button>
+                  )}
+                  {product.deliveryAvailable && (
+                    <button onClick={() => setDeliveryMethod("delivery")}
+                      className={`flex flex-col items-start gap-3 rounded-[2rem] p-6 text-left transition-all duration-500 ${deliveryMethod === "delivery" ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-white text-slate-500 shadow-sm hover:shadow-md"}`}>
+                      <Truck className={`h-6 w-6 ${deliveryMethod === "delivery" ? "text-white" : "text-primary"}`} />
+                      <div>
+                        <p className="font-black text-sm uppercase tracking-tight">Livraison Rapide</p>
+                        <p className="text-[10px] font-bold opacity-60 mt-1 uppercase tracking-widest">Lomé & Périphérie</p>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
 
             <div className="pt-8 border-t border-slate-50">
-              {/* Interaction Logic */}
-              {(isExemptFromCommission || isListingCategory) ? (
-                /* PRO / Listing Logic */
+              {isListing ? (
                 <div className="space-y-6">
                   {sellerWhatsapp ? (
                     <a
                       href={generateWhatsAppLink(sellerWhatsapp, {
-                        id: "nouveau", items: [{ name: product.name, quantity: 1, price: displayPrice }],
-                        total: displayPrice, deliveryMethod, neighborhood: product.neighborhood,
-                        buyerName: profile?.display_name || "", buyerPhone: profile?.phone || "",
+                        id: "nouveau", 
+                        items: [{ name: product.name, quantity: 1, price: displayPrice }],
+                        total: displayPrice, 
+                        deliveryMethod, 
+                        neighborhood: product.neighborhood,
+                        buyerName: profile?.display_name || "", 
+                        buyerPhone: profile?.phone || "",
                       })}
                       target="_blank" rel="noopener noreferrer"
                       className="flex w-full items-center justify-center gap-4 rounded-full bg-[#25D366] hover:bg-[#20bd5a] px-10 py-6 font-black text-white text-xl shadow-[0_20px_40px_rgba(37,211,102,0.2)] transition-all active:scale-95"
                     >
-                      <MessageCircle className="h-7 w-7" /> Commander par WhatsApp
+                      <MessageCircle className="h-7 w-7" /> Contact Vendeur
                     </a>
                   ) : (
-                    <Button size="lg" disabled className="w-full rounded-full h-20 font-black text-xl opacity-50">Vendeur Indisponible</Button>
-                  )}
-                  <div className="flex gap-4">
-                    <Button variant="outline" onClick={handleShare} className="flex-1 h-16 rounded-full border-2 border-slate-100 font-black text-xs uppercase tracking-widest gap-3 hover:bg-slate-50">
-                      <Share2 className="h-5 w-5" /> Partager l'offre
+                    <Button size="lg" disabled className="w-full rounded-full h-20 font-black text-xl bg-slate-100 text-slate-400 border-none shadow-none">
+                      Momentanément indisponible
                     </Button>
-                  </div>
+                  )}
+                  <Button variant="outline" onClick={handleShare} className="w-full h-16 rounded-full border-2 border-slate-100 font-black text-xs uppercase tracking-widest gap-3">
+                    <Share2 className="h-5 w-5" /> Partager l'offre
+                  </Button>
                 </div>
               ) : !showOrderForm ? (
-                /* Direct Purchase Logic */
                 <div className="space-y-6">
-                  <Button size="lg" className="w-full h-20 bg-primary hover:bg-primary-dark rounded-full font-black text-xl shadow-[0_20px_40px_rgba(109,40,217,0.2)] transition-all" onClick={() => setShowOrderForm(true)}>
+                  <Button size="lg" className="w-full h-20 bg-primary hover:bg-primary-dark rounded-full font-black text-xl shadow-xl transition-all" onClick={() => setShowOrderForm(true)}>
                     Finaliser la Commande
                   </Button>
-                  <Button variant="outline" onClick={handleShare} className="w-full h-16 rounded-full border-2 border-slate-100 font-black text-xs uppercase tracking-widest gap-3 hover:bg-slate-50">
+                  <Button variant="outline" onClick={handleShare} className="w-full h-16 rounded-full border-2 border-slate-100 font-black text-xs uppercase tracking-widest gap-3">
                     <Share2 className="h-5 w-5" /> Partager l'offre
                   </Button>
                 </div>
               ) : (
-                /* Order Form - Quality Luxury UI */
                 <Card className="border-none bg-white shadow-3xl rounded-[3rem] p-10 space-y-8 relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-8">
                      <Package className="h-20 w-20 text-primary/5 rotate-12" />
@@ -395,32 +484,39 @@ export default function ProductDetail() {
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nom & Prénom</Label>
-                      <Input placeholder="Votre identité" value={buyerName} onChange={e => setBuyerName(e.target.value)} className="h-16 rounded-2xl border-none bg-slate-50 px-6 font-bold text-lg focus-visible:ring-primary" />
+                      <Input placeholder="Votre identité" value={buyerName} onChange={e => setBuyerName(e.target.value)} className="h-16 rounded-2xl border-none bg-slate-50 px-6 font-bold text-lg" />
                     </div>
                     <div className="space-y-3">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Numéro WhatsApp</Label>
-                      <Input type="tel" placeholder="+228" value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} className="h-16 rounded-2xl border-none bg-slate-50 px-6 font-bold text-lg focus-visible:ring-primary" />
+                      <Input type="tel" placeholder="+228" value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} className="h-16 rounded-2xl border-none bg-slate-50 px-6 font-bold text-lg" />
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quartier de livraison</Label>
-                      <Select value={buyerNeighborhood} onValueChange={setBuyerNeighborhood}>
-                        <SelectTrigger className="h-16 rounded-2xl border-none bg-slate-50 px-6 font-bold text-lg">
-                          <SelectValue placeholder="Sélectionner" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-3xl border-none shadow-2xl p-4">
-                          {neighborhoods.map(n => <SelectItem key={n} value={n} className="rounded-xl py-4 font-bold">{n}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Où voulez-vous être livré ?</Label>
+                      <NeighborhoodSelector value={buyerNeighborhood} onSelect={setBuyerNeighborhood} placeholder="Rechercher mon quartier..." />
                     </div>
                   </div>
 
                   <div className="p-8 rounded-[2rem] bg-primary/2 space-y-6 border border-primary/5">
-                    <div className="flex justify-between items-center group">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prix Total</span>
-                      <span className="text-3xl font-black text-primary font-display tracking-tighter leading-none">{formatCFA(displayPrice + (deliveryMethod === "delivery" ? ({"Zone A": 500, "Zone B": 1000, "Zone C": 1500, "Zone D": 2000, "Zone E": 2500}[deliveryZone] || 0) : 0))}</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                        <span>Sous-total</span>
+                        <span>{formatCFA(displayPrice)}</span>
+                      </div>
+                      {deliveryMethod === "delivery" && buyerNeighborhood && (
+                        <div className="flex justify-between items-center text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                          <span>Livraison ({getEstimatedDeliveryTime(buyerNeighborhood)})</span>
+                          <span className="text-primary">{formatCFA(deliveryFee)}</span>
+                        </div>
+                      )}
                     </div>
-                    <Button onClick={handleOrder} disabled={isProcessing} className="w-full h-16 bg-primary hover:bg-primary-dark rounded-full font-black text-lg transition-all shadow-xl shadow-primary/20">
-                      {isProcessing ? "Finalisation..." : "Valider l'achat"}
+                    <div className="flex justify-between items-center pt-4 border-t border-primary/5">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prix Total</span>
+                      <span className="text-3xl font-black text-primary font-display tracking-tighter">
+                        {formatCFA(displayPrice + (deliveryMethod === "delivery" ? deliveryFee : 0))}
+                      </span>
+                    </div>
+                    <Button onClick={handleOrder} disabled={isProcessing} className="w-full h-16 bg-primary hover:bg-primary-dark rounded-full font-black text-lg transition-all shadow-lg shadow-primary/20">
+                      {isProcessing ? "Finalisation..." : "🔒 Valider l'achat"}
                     </Button>
                     <button onClick={() => setShowOrderForm(false)} className="w-full text-center text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-primary transition-colors">
                       Modifier la commande
@@ -430,7 +526,6 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Seller Identity - Editorial Style */}
             <div className="p-8 rounded-[2.5rem] bg-white shadow-sm border border-slate-50 flex items-center justify-between group">
               <div className="flex items-center gap-6">
                 <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-[-4deg] group-hover:rotate-0 transition-transform">
@@ -447,7 +542,6 @@ export default function ProductDetail() {
               <FollowButton sellerId={product.sellerId} />
             </div>
 
-            {/* Trust Badges - Soft Integration */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-4 p-4 rounded-3xl bg-slate-50/50">
                 <ShieldCheck className="h-6 w-6 text-primary/40" />
@@ -461,7 +555,6 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Reviews Section - Content First */}
         <section className="mt-32 pt-32 border-t border-slate-50">
           <div className="flex items-center justify-between mb-12">
             <div className="space-y-2">
@@ -478,7 +571,7 @@ export default function ProductDetail() {
           {reviews.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
               {reviews.map((review) => (
-                <div key={review.id} className="p-10 rounded-[3rem] bg-white shadow-sm hover:shadow-xl transition-all border border-slate-50 space-y-6">
+                <div key={review.id} className="p-10 rounded-[3rem] bg-white shadow-sm border border-slate-50 space-y-6">
                   <div className="flex justify-between items-center">
                     <div className="flex gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
@@ -509,4 +602,3 @@ export default function ProductDetail() {
     </div>
   );
 }
-

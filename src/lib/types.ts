@@ -24,6 +24,10 @@ export interface Product {
   isBoosted?: boolean;
   isApproved?: boolean;
   boostExpiry?: string;
+  options?: {
+    variants?: { name: string; required: boolean; values: string[] }[];
+    extras?: { name: string; price: number }[];
+  };
 }
 
 export interface Shop {
