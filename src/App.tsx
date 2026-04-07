@@ -29,6 +29,7 @@ import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
 import Help from "./pages/Help";
+import Cart from "./pages/Cart";
 import StickyWhatsApp from "@/components/StickyWhatsApp";
 import BoostExpirationManager from "@/components/BoostExpirationManager";
 import { StickyCheckout } from "@/components/cart/StickyCheckout";
@@ -63,6 +64,7 @@ function AnimatedRoutes() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/aide" element={<Help />} />
+        <Route path="/panier" element={<Cart />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

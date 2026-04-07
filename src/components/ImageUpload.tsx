@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ImagePlus, X, Loader2, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -9,6 +10,7 @@ import { cn } from "@/lib/utils";
 interface ImageUploadProps {
   images: string[];
   onChange: (images: string[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
   maxImages?: number;
 }
 
@@ -40,7 +42,7 @@ async function compressImage(file: File): Promise<Blob | File> {
   }
 }
 
-export default function ImageUpload({ images, onChange, maxImages = 5 }: ImageUploadProps) {
+export default function ImageUpload({ images, onChange, onUploadingChange, maxImages = 5 }: ImageUploadProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -52,6 +54,13 @@ export default function ImageUpload({ images, onChange, maxImages = 5 }: ImageUp
       tasks.forEach(t => URL.revokeObjectURL(t.previewUrl));
     };
   }, [tasks]);
+
+  useEffect(() => {
+    if (onUploadingChange) {
+      const isUploading = tasks.some(t => t.status !== 'error' && t.status !== 'success');
+      onUploadingChange(isUploading);
+    }
+  }, [tasks, onUploadingChange]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

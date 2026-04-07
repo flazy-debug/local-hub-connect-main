@@ -231,7 +231,7 @@ const Index = () => {
                     Le Marché Digital <span className="text-white">Premium</span>.<br /> Boutiques, Food & Services de Confiance.
                   </p>
                   <div className="pt-10 flex flex-wrap justify-center gap-6">
-                    <Link to="/vendeur/login">
+                    <Link to="/auth?type=vendeur">
                       <Button size="lg" className="rounded-3xl bg-white text-primary hover:bg-slate-50 px-12 h-20 font-black text-xl shadow-2xl transition-all hover:scale-105 active:scale-95">
                         Ouvrir ma boutique
                       </Button>

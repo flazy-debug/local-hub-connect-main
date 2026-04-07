@@ -5,7 +5,8 @@ import {
   Package, ShoppingCart, TrendingUp, Plus, Trash2, Pencil, Megaphone, 
   Bell, Wallet, Tag, Camera, ShieldCheck, Store, Copy, Facebook, 
   Instagram, Link as LinkIcon, MessageSquare, Clock, ExternalLink,
-  AlertTriangle, ArrowUpRight, Calendar as CalendarIcon, ChevronDown
+  AlertTriangle, ArrowUpRight, Calendar as CalendarIcon, ChevronDown,
+  Truck
 } from "lucide-react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -96,6 +97,9 @@ export function SellerDashboard() {
   const [pTransmission, setPTransmission] = useState("automatique");
   const [pSurface, setPSurface] = useState("");
   const [pRooms, setPRooms] = useState("");
+  const [pIsRent, setPIsRent] = useState(false);
+  const [pDeliveryZone, setPDeliveryZone] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
   
@@ -211,18 +215,41 @@ export function SellerDashboard() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    
+    if (isUploading) {
+      toast({ 
+        title: "Veuillez patienter ⏳", 
+        description: "L'upload des images est en cours.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
+      // Explicit conversion with defaults to avoid NaN/Null in DB
+      const price = Number(pPrice) || 0;
+      const promoPrice = pPromoPrice ? Number(pPromoPrice) : null;
+      const stock = (pCategory === 'immobilier' || pCategory === 'vehicules') ? 1 : (Number(pStock) || 0);
+
       const { error } = await supabase.from("products").insert({
-        seller_id: user.id, name: pName, description: pDesc,
-        price: parseInt(pPrice),
-        promo_price: pPromoPrice ? parseInt(pPromoPrice) : null,
-        category: pCategory, condition: pCondition, stock: parseInt(pStock),
-        neighborhood: pNeighborhood, pickup_available: pPickup,
-        delivery_available: pDelivery, pickup_address: pPickupAddr || null,
+        seller_id: user.id, 
+        name: pName || "Sans nom", 
+        description: pDesc || "",
+        price: price,
+        promo_price: promoPrice,
+        category: pCategory || "autres", 
+        condition: pCondition, 
+        stock: stock,
+        neighborhood: pNeighborhood || "Lomé", 
+        pickup_available: pPickup,
+        delivery_available: pDelivery, 
+        pickup_address: pPickupAddr || null,
+        delivery_zone: pDeliveryZone || null,
+        is_rent: pIsRent,
         images: pImages.length > 0 ? pImages : ["/placeholder.svg"],
         video_url: pVideoUrl || null,
-        supplier_price: sellerPlan === "PARTNER" ? parseInt(pSupplierPrice) : null,
+        supplier_price: sellerPlan === "PARTNER" ? (Number(pSupplierPrice) || null) : null,
         transaction_type: pTransactionType,
         specifications: {
           year: pYear,
@@ -234,11 +261,23 @@ export function SellerDashboard() {
         },
         is_approved: sellerPlan !== "PARTNER",
       });
+      
       if (error) throw error;
+      
       toast({ title: "Produit ajouté ✅" });
-      setAddDialogOpen(false); resetForm(); fetchData();
-    } catch (err: any) { toast({ title: "Erreur", description: err.message, variant: "destructive" }); }
-    finally { setSubmitting(false); }
+      setAddDialogOpen(false); 
+      resetForm(); 
+      fetchData();
+    } catch (err: any) { 
+      console.error("Submission error:", err);
+      toast({ 
+        title: "Erreur de publication", 
+        description: err.message || "Vérifiez vos informations et réessayez.", 
+        variant: "destructive" 
+      }); 
+    } finally { 
+      setSubmitting(false); 
+    }
   };
 
   const handleCategoryChange = (val: string) => {
@@ -269,6 +308,7 @@ export function SellerDashboard() {
     setPPickup(true); setPDelivery(false); setPPickupAddr(""); setPImages([]); setPVideoUrl(null); setPSupplierPrice("");
     setPTransactionType("vente"); setPYear(""); setPKm(""); setPFuel("essence");
     setPTransmission("automatique"); setPSurface(""); setPRooms("");
+    setPIsRent(false); setPDeliveryZone("");
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -352,6 +392,7 @@ export function SellerDashboard() {
                     <DialogHeader><DialogTitle className="font-display text-2xl">Vendre un article</DialogTitle></DialogHeader>
                     <form onSubmit={handleAddProduct} className="space-y-4 mt-4">
                       <div className="space-y-2"><Label>Nom de l'article *</Label><Input placeholder="Ex: Basket Nike Air" value={pName} onChange={e => setPName(e.target.value)} required /></div>
+                      <div className="space-y-2"><Label>Description *</Label><Textarea placeholder="Décrivez votre produit en détail..." value={pDesc} onChange={e => setPDesc(e.target.value)} required className="rounded-2xl" /></div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>{pCategory.toLowerCase().includes('service') ? "Tarif base / Déplacement (CFA) *" : "Prix (CFA) *"}</Label>
@@ -375,7 +416,10 @@ export function SellerDashboard() {
                                 <button
                                   key={t}
                                   type="button"
-                                  onClick={() => setPTransactionType(t as any)}
+                                  onClick={() => {
+                                    setPTransactionType(t as any);
+                                    setPIsRent(t === 'location');
+                                  }}
                                   className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", pTransactionType === t ? "bg-primary text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}
                                 >
                                   {t}
@@ -435,7 +479,29 @@ export function SellerDashboard() {
                           </Select>
                         </div>
                       </div>
-                      <div className="space-y-2"><Label>Photos</Label><ImageUpload images={pImages} onChange={setPImages} maxImages={5} /></div>
+
+                      {/* Delivery Zone Integration */}
+                      <div className={cn("space-y-4 p-4 rounded-3xl bg-primary/5 border border-primary/10 transition-all", pDelivery ? "opacity-100" : "opacity-50 pointer-events-none")}>
+                        <div className="flex items-center justify-between">
+                           <Label className="text-[10px] font-black uppercase tracking-widest">Zone de Livraison Préférée</Label>
+                           <Truck className="h-4 w-4 text-primary" />
+                        </div>
+                        <Select value={pDeliveryZone} onValueChange={setPDeliveryZone} disabled={!pDelivery}>
+                          <SelectTrigger className="rounded-3xl bg-white border-none shadow-sm"><SelectValue placeholder="Sélectionner le quartier" /></SelectTrigger>
+                          <SelectContent>{neighborhoods.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <p className="text-[9px] text-primary/60 font-medium italic">Spécifiez votre zone de livraison habituelle pour rassurer vos clients.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Photos</Label>
+                        <ImageUpload 
+                          images={pImages} 
+                          onChange={setPImages} 
+                          onUploadingChange={setIsUploading}
+                          maxImages={5} 
+                        />
+                      </div>
                       
                       <div className="flex items-start space-x-3 p-4 rounded-3xl bg-slate-50 border border-slate-100 mt-4">
                         <input 
@@ -445,15 +511,19 @@ export function SellerDashboard() {
                           className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                         />
                         <Label htmlFor="compliance" className="text-[11px] leading-tight font-medium text-muted-foreground cursor-pointer">
-                          Je certifie que ce produit est 100% légal et conforme aux <Link to="/help" className="text-primary underline font-bold">règles publicitaires Meta/Facebook</Link>. Pas de contrefaçons, tabac, ou produits interdits.
+                          Je certifie que ce produit est 100% légal et conforme aux <Link to="/aide" className="text-primary underline font-bold">règles publicitaires Meta/Facebook</Link>. Pas de contrefaçons, tabac, ou produits interdits.
                         </Label>
                       </div>
                       
                       <p className="text-[10px] text-muted-foreground text-center px-4 leading-tight">
                         En publiant sur Epuremarket, vous acceptez nos règles de sécurité et de conformité (Interdiction de produits illicites, tabac, etc.).
                       </p>
-                      <Button type="submit" className="w-full h-12 rounded-3xl bg-primary text-white font-bold" disabled={submitting}>
-                        {submitting ? "Publication..." : "Publier maintenant"}
+                      <Button 
+                        type="submit" 
+                        className={cn("w-full h-14 rounded-3xl font-black text-xs uppercase tracking-widest transition-all", isUploading ? "bg-slate-100 text-slate-400" : "bg-primary text-white hover:scale-[1.02]")}
+                        disabled={submitting || isUploading}
+                      >
+                        {submitting ? "Publication..." : isUploading ? "Upload des images..." : "Publier maintenant"}
                       </Button>
                     </form>
                   </DialogContent>

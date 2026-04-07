@@ -32,7 +32,7 @@ export default function Footer() {
           <div>
             <h4 className="font-display font-semibold">Vendeurs</h4>
             <ul className="mt-3 space-y-2 text-sm opacity-80">
-              <li><Link to="/vendeur" className="hover:opacity-100">Devenir Vendeur</Link></li>
+              <li><Link to="/devenir-vendeur" className="hover:opacity-100">Devenir Vendeur</Link></li>
               <li><Link to="/vendeur/dashboard" className="hover:opacity-100">Tableau de bord</Link></li>
             </ul>
           </div>
